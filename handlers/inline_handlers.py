@@ -17,7 +17,40 @@ class Ask_Question(StatesGroup):
 
 # Создаем дб с таблицей
 db_example = Database('example.db')
-# таблица с данными пользователей
+
+# таблица с данными пользователей лс
+columns_users_private = [('id', 'INTEGER PRIMARY KEY AUTOINCREMENT'),
+                         ('user_id', 'INTEGER'),
+                         ('password', 'TEXT'),
+                         ('username', 'TEXT'),
+                         ('user_first_name', 'TEXT'),
+                         ('user_last_name', 'TEXT'),
+                         ('date', 'INTEGER')]
+db_example.create_table('table_users_private', columns_users_private)
+
+
+# Внесение данных юзеров в таблицу бд через ЛС
+@router.message(ChatTypeFilter(chat_type=["private"]), Command('registration'))
+async def cmd_reg(message: Message):
+    # Добавляем пользователей в БД при нажатии /reg
+    data_for_db = {
+        'user_id': message.from_user.id,
+        'password': None,
+        'username': message.from_user.username,
+        'user_first_name': message.from_user.first_name,
+        'user_last_name': message.from_user.last_name,
+        'date': message.date,
+    }
+    # Попытка проверить, что пользовтель не сущесвтует
+    if db_example.check_value('table_users_private', 'user_id', message.from_user.id):
+        db_example.insert_data('table_users_private', data_for_db)
+    else:
+        print("Пользователь уже существует!")
+    await message.answer(f'Спасибо, вы внесены в базу данных!'
+                         f'\nВаш логин для регистрации в веб-приложении: {message.from_user.id}')
+
+
+# таблица с участниками чата
 columns_users = [('id', 'INTEGER PRIMARY KEY AUTOINCREMENT'),
                  ('chat_id', 'INTEGER'),
                  ('chat_username', 'TEXT'),
@@ -48,11 +81,13 @@ async def cmd_start(message: Message):
     else:
         print("Пользователь уже существует")
 
+
 # Тест сообщения с инлайн кнопками
-@router.message(ChatTypeFilter(chat_type=["group"]), Command('main'))
+@router.message(ChatTypeFilter(chat_type=["group"]), Command('service'))
 async def cmd_main(message: Message):
     await message.answer('Это основное сообщение тестирования команды /main',
                          reply_markup=inline_buttons.main_kb)
+
 
 # таблица с данными сообщений
 columns_messages = [('id', 'INTEGER PRIMARY KEY AUTOINCREMENT'),
@@ -65,6 +100,11 @@ columns_messages = [('id', 'INTEGER PRIMARY KEY AUTOINCREMENT'),
                     ('date', 'INTEGER')
                     ]
 db_example.create_table('table_messages', columns_messages)
+
+
+# @router.message(F.photo)
+# async def get_photo(message: Message):
+#     await message.bot.download(file=message.photo[-1].file_id, destination=file_name)
 
 # Ловим состояние ввода вопроса пользователя
 @router.message(ChatTypeFilter(chat_type=["group"]), Ask_Question.question)
@@ -90,19 +130,20 @@ async def second_step_asking_question(message: Message, state: FSMContext):
 
 # таблица с данными сообщений
 columns_replies = [('id', 'INTEGER PRIMARY KEY AUTOINCREMENT'),
-                    ('message_id', 'INTEGER'),
-                    ('chat_id', 'INTEGER'),
-                    ('user_id', 'INTEGER'),
-                    ('message_text', 'TEXT'),
-                    ('chat_username', 'TEXT'),
-                    ('username', 'TEXT'),
-                    ('date', 'INTEGER'),
-                    ('replied_to_user_id', 'INTEGER'),
-                    ('replied_to_message_text', 'TEXT'),
-                    ('replied_to_message_id', 'INTEGER'),
-                    ('replied_to_message_date', 'TEXT')
-                    ]
+                   ('message_id', 'INTEGER'),
+                   ('chat_id', 'INTEGER'),
+                   ('user_id', 'INTEGER'),
+                   ('message_text', 'TEXT'),
+                   ('chat_username', 'TEXT'),
+                   ('username', 'TEXT'),
+                   ('date', 'INTEGER'),
+                   ('replied_to_user_id', 'INTEGER'),
+                   ('replied_to_message_text', 'TEXT'),
+                   ('replied_to_message_id', 'INTEGER'),
+                   ('replied_to_message_date', 'TEXT')
+                   ]
 db_example.create_table('table_replies', columns_replies)
+
 
 # Сохраняем только реплаи, которые были даны на вопросы через бот
 @router.message(ChatTypeFilter(chat_type=["group"]))
