@@ -8,6 +8,8 @@ from database.database import Database
 from filters.chat_filters import ChatTypeFilter
 from keyboards import inline_buttons
 
+from bot import bot
+
 router = Router()
 
 
@@ -120,12 +122,17 @@ async def second_step_asking_question(message: Message, state: FSMContext):
                    'username': message.from_user.username,
                    'date': message.date,
                    }
-    db_example.insert_data('table_messages', data_for_db)
-    await message.answer(f'Спасибо, ваш вопрос принят!'
-                         f'\nВопрос задан: {message.from_user.id}'
-                         f'\nВаш вопрос: {data["question"]}',
-                         reply_markup=inline_buttons.delete_kb)
-    await state.clear()  # чтобы не засорялся, у пользователя слетало состояние
+    if data["question"] == "-":
+        await message.answer(f'Ваш вопрос не будет записан!',
+                             reply_markup=inline_buttons.delete_kb)
+        await state.clear()  # чтобы не засорялся, у пользователя слетало состояние
+    else:
+        db_example.insert_data('table_messages', data_for_db)
+        await message.answer(f'Спасибо, ваш вопрос принят!'
+                             f'\nВопрос задан: {message.from_user.id}'
+                             f'\nВаш вопрос: {data["question"]}',
+                             reply_markup=inline_buttons.delete_kb)
+        await state.clear()  # чтобы не засорялся, у пользователя слетало состояние
 
 
 # таблица с данными сообщений
@@ -173,7 +180,7 @@ async def process_message(message: Message):
 # Обработчик на колбэк инлайн кнопки
 @router.callback_query(F.data == 'callback_question')
 async def get_question(callback: CallbackQuery, state: FSMContext):
-    await callback.message.edit_text('Введите вопрос:')
+    await callback.message.edit_text('Для отмены ввода введите -. \nВведите вопрос:')
     await state.update_data(msg=callback.message.message_id)
     await state.set_state(Ask_Question.question)
     await callback.answer()
@@ -183,3 +190,5 @@ async def get_question(callback: CallbackQuery, state: FSMContext):
 @router.callback_query(F.data == 'callback_delete')
 async def delete_msg(callback: CallbackQuery):
     await callback.message.delete()
+
+
