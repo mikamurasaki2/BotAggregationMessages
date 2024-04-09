@@ -4,11 +4,12 @@ from aiogram import F, Router
 from aiogram.filters import CommandStart, Command
 from aiogram.types import Message, CallbackQuery
 
-from database.database import Database
+# from database.database_sql import Database
 from filters.chat_filters import ChatTypeFilter
 from keyboards import inline_buttons
 
 from bot import bot
+from database.database_mysql import *
 
 router = Router()
 
@@ -17,20 +18,7 @@ class Ask_Question(StatesGroup):
     question = State()
 
 
-# Создаем дб с таблицей
-db_example = Database('example.db')
-
-# таблица с данными пользователей лс
-columns_users_private = [('id', 'INTEGER PRIMARY KEY AUTOINCREMENT'),
-                         ('user_id', 'INTEGER'),
-                         ('password', 'TEXT'),
-                         ('username', 'TEXT'),
-                         ('user_first_name', 'TEXT'),
-                         ('user_last_name', 'TEXT'),
-                         ('date', 'INTEGER')]
-db_example.create_table('table_users_private', columns_users_private)
-
-
+# !!!!!!!!!!!!!!! НЕ КОРРЕКТНО ЗАПИСЫВАЕТ В БД !!!!!!!!!!!!!!
 # Внесение данных юзеров в таблицу бд через ЛС
 @router.message(ChatTypeFilter(chat_type=["private"]), Command('registration'))
 async def cmd_reg(message: Message):
@@ -44,25 +32,15 @@ async def cmd_reg(message: Message):
         'date': message.date,
     }
     # Попытка проверить, что пользовтель не сущесвтует
-    if db_example.check_value('table_users_private', 'user_id', message.from_user.id):
-        db_example.insert_data('table_users_private', data_for_db)
+    if not check_private_user(message.from_user.id):
+        insert_private_user(data_for_db)
     else:
         print("Пользователь уже существует!")
     await message.answer(f'Спасибо, вы внесены в базу данных!'
                          f'\nВаш логин для регистрации в веб-приложении: {message.from_user.id}')
 
 
-# таблица с участниками чата
-columns_users = [('id', 'INTEGER PRIMARY KEY AUTOINCREMENT'),
-                 ('chat_id', 'INTEGER'),
-                 ('chat_username', 'TEXT'),
-                 ('user_id', 'INTEGER'),
-                 ('username', 'TEXT'),
-                 ('user_first_name', 'TEXT'),
-                 ('user_last_name', 'TEXT')]
-db_example.create_table('table_users', columns_users)
-
-
+# !!!!!!!!!!!!!!! НЕ КОРРЕКТНО ЗАПИСЫВАЕТ В БД !!!!!!!!!!!!!!
 # Внесение данных юзеров в таблицу бд
 @router.message(ChatTypeFilter(chat_type=["group"]), Command('start'))
 async def cmd_start(message: Message):
@@ -76,10 +54,8 @@ async def cmd_start(message: Message):
         'user_last_name': message.from_user.last_name
     }
     # Попытка проверить, что пользовтель не сущесвтует
-    if db_example.check_value('table_users', 'user_id', message.from_user.id) or db_example.check_value('table_users',
-                                                                                                        'chat_id',
-                                                                                                        message.chat.id):
-        db_example.insert_data('table_users', data_for_db)
+    if check_user(user_id=message.from_user.id, chat_id=message.chat.id):
+        insert_user(data_for_db)
     else:
         print("Пользователь уже существует")
 
@@ -89,19 +65,6 @@ async def cmd_start(message: Message):
 async def cmd_main(message: Message):
     await message.answer('Это основное сообщение тестирования команды /main',
                          reply_markup=inline_buttons.main_kb)
-
-
-# таблица с данными сообщений
-columns_messages = [('id', 'INTEGER PRIMARY KEY AUTOINCREMENT'),
-                    ('message_id', 'INTEGER'),
-                    ('chat_id', 'INTEGER'),
-                    ('user_id', 'INTEGER'),
-                    ('message_text', 'TEXT'),
-                    ('chat_username', 'TEXT'),
-                    ('username', 'TEXT'),
-                    ('date', 'INTEGER')
-                    ]
-db_example.create_table('table_messages', columns_messages)
 
 
 # @router.message(F.photo)
@@ -127,7 +90,7 @@ async def second_step_asking_question(message: Message, state: FSMContext):
                              reply_markup=inline_buttons.delete_kb)
         await state.clear()  # чтобы не засорялся, у пользователя слетало состояние
     else:
-        db_example.insert_data('table_messages', data_for_db)
+        insert_message(data_for_db)
         await message.answer(f'Спасибо, ваш вопрос принят!'
                              f'\nВопрос задан: {message.from_user.id}'
                              f'\nВаш вопрос: {data["question"]}',
@@ -135,29 +98,12 @@ async def second_step_asking_question(message: Message, state: FSMContext):
         await state.clear()  # чтобы не засорялся, у пользователя слетало состояние
 
 
-# таблица с данными сообщений
-columns_replies = [('id', 'INTEGER PRIMARY KEY AUTOINCREMENT'),
-                   ('message_id', 'INTEGER'),
-                   ('chat_id', 'INTEGER'),
-                   ('user_id', 'INTEGER'),
-                   ('message_text', 'TEXT'),
-                   ('chat_username', 'TEXT'),
-                   ('username', 'TEXT'),
-                   ('date', 'INTEGER'),
-                   ('replied_to_user_id', 'INTEGER'),
-                   ('replied_to_message_text', 'TEXT'),
-                   ('replied_to_message_id', 'INTEGER'),
-                   ('replied_to_message_date', 'TEXT')
-                   ]
-db_example.create_table('table_replies', columns_replies)
-
-
 # Сохраняем только реплаи, которые были даны на вопросы через бот
 @router.message(ChatTypeFilter(chat_type=["group"]))
 async def process_message(message: Message):
     # Check if the message is a reply
     if message.reply_to_message:
-        if not db_example.check_value('table_messages', 'message_id', message.reply_to_message.message_id):
+        if check_message(message.reply_to_message.message_id):
             data_for_db = {'message_id': message.message_id,
                            'chat_id': message.chat.id,
                            'user_id': message.from_user.id,
@@ -170,7 +116,7 @@ async def process_message(message: Message):
                            'replied_to_message_id': message.reply_to_message.message_id if message.reply_to_message else None,
                            'replied_to_message_date': message.reply_to_message.date if message.reply_to_message else None
                            }
-            db_example.insert_data('table_replies', data_for_db)
+            insert_reply(data_for_db)
         else:
             print("Сообщение не является вопросом, заданным через бота")
     # replied_message_id = message.reply_to_message.message_id  # Айди сообщения, на которое ответили (основное сообщение)
@@ -190,5 +136,3 @@ async def get_question(callback: CallbackQuery, state: FSMContext):
 @router.callback_query(F.data == 'callback_delete')
 async def delete_msg(callback: CallbackQuery):
     await callback.message.delete()
-
-
