@@ -18,7 +18,6 @@ class Ask_Question(StatesGroup):
     question = State()
 
 
-# !!!!!!!!!!!!!!! НЕ КОРРЕКТНО ЗАПИСЫВАЕТ В БД !!!!!!!!!!!!!!
 # Внесение данных юзеров в таблицу бд через ЛС
 @router.message(ChatTypeFilter(chat_type=["private"]), Command('registration'))
 async def cmd_reg(message: Message):

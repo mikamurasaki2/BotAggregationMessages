@@ -4,7 +4,8 @@ import pymysql
 # import mysql.connector
 from config import *
 import database.models as models
-#import models
+
+# import models
 
 
 engine = create_engine('mysql+mysqlconnector://root:@localhost/maindb')
@@ -71,12 +72,29 @@ def check_private_user(user_id):
 
 def check_user(user_id, chat_id):
     with get_db() as db:
-        is_user_id = db.query(models.User).filter(models.User.user_id == user_id).first()
-        is_chat_id = db.query(models.User).filter(models.User.chat_id == chat_id).first()
-        if is_user_id == is_chat_id:
-            return True
+        users = db.query(models.User).filter(models.User.user_id == user_id).all()
+        if users:
+            chats = [user.chat_id for user in users]
+            if chat_id not in chats:
+                return True
+            else:
+                return False
         else:
-            return False
+            return True
+
+
+# def check_user(user_id, chat_id):
+#     with get_db() as db:
+#         user = db.query(models.User).filter(models.User.user_id == user_id).first()
+#         if user:
+#             users = db.query(models.User).filter(models.User.user_id == user_id).all()
+#             chats = [user.chat_id for user in users]
+#             if chat_id not in chats:
+#                 return True
+#             else:
+#                 return False
+#         else:
+#             return True
 
 
 def check_message(message_id):
