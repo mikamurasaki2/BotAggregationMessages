@@ -4,7 +4,7 @@ import pymysql
 # import mysql.connector
 from config import *
 import database.models as models
-# import models
+#import models
 
 
 engine = create_engine('mysql+mysqlconnector://root:@localhost/maindb')
