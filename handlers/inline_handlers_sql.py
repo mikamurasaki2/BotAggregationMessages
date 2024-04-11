@@ -69,7 +69,7 @@ async def cmd_start(message: Message):
     # Добавляем пользователей в БД при нажатии /start
     data_for_db = {
         'chat_id': message.chat.id,
-        'chat_username': message.chat.username,
+        'chat_username': message.chat.title,
         'user_id': message.from_user.id,
         'username': message.from_user.username,
         'user_first_name': message.from_user.first_name,
@@ -118,7 +118,7 @@ async def second_step_asking_question(message: Message, state: FSMContext):
                    'chat_id': message.chat.id,
                    'user_id': message.from_user.id,
                    'message_text': message.text,
-                   'chat_username': message.chat.username,
+                   'chat_username': message.chat.title,
                    'username': message.from_user.username,
                    'date': message.date,
                    }
@@ -162,7 +162,7 @@ async def process_message(message: Message):
                            'chat_id': message.chat.id,
                            'user_id': message.from_user.id,
                            'message_text': message.text,
-                           'chat_username': message.chat.username,
+                           'chat_username': message.chat.title,
                            'username': message.from_user.username,
                            'date': message.date,
                            'replied_to_user_id': message.reply_to_message.from_user.id if message.reply_to_message else None,

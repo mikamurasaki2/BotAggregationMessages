@@ -2,16 +2,16 @@ import asyncio
 import logging
 from aiogram import Bot, Dispatcher
 from config import TOKEN
-from handlers import inline_handlers_mysql
-#from handlers import inline_handlers_sql
+#from handlers import inline_handlers_mysql
+from handlers import inline_handlers_sql
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
 
 
 async def main():
-    dp.include_routers(inline_handlers_mysql.router)
-    #dp.include_routers(inline_handlers_sql.router)
+    #dp.include_routers(inline_handlers_mysql.router)
+    dp.include_routers(inline_handlers_sql.router)
     await dp.start_polling(bot)
 
 
