@@ -8,7 +8,7 @@ import database.models as models
 # import models
 
 
-engine = create_engine('mysql+mysqlconnector://root:@localhost/maindb')
+engine = create_engine('mysql+mysqlconnector://root:@localhost/maindb5')
 Session = sessionmaker(bind=engine)
 
 
@@ -104,3 +104,14 @@ def check_message(message_id):
             return True
         else:
             return False
+
+# GETS
+
+# def get_first_name(message_id):
+#     return True
+#
+# def get_last_name(message_id):
+#     return True
+#
+# def get_password(message_id):
+#     return True

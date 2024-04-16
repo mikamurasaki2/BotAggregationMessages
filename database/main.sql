@@ -1,53 +1,54 @@
 create table table_messages
 (
-    id            INTEGER
-        primary key auto_increment,
-    message_id    BIGINT,
-    chat_id       BIGINT,
-    user_id       BIGINT,
-    message_text  TEXT,
-    chat_username TEXT,
-    username      TEXT,
-    date          DATETIME
+    id            int auto_increment
+        primary key,
+    message_id    bigint  null,
+    chat_id       bigint  null,
+    user_id       bigint  null,
+    message_text  text null,
+    chat_username text null,
+    username      text null,
+    date          int  null
 );
 
 create table table_replies
 (
-    id                      INTEGER
-        primary key auto_increment,
-    message_id              BIGINT,
-    chat_id                 BIGINT,
-    user_id                 BIGINT,
-    message_text            TEXT,
-    chat_username           TEXT,
-    username                TEXT,
-    date                    DATETIME,
-    replied_to_user_id      BIGINT,
-    replied_to_message_text TEXT,
-    replied_to_message_id   BIGINT,
-    replied_to_message_date TEXT
+    id                      int auto_increment
+        primary key,
+    message_id              bigint  null,
+    chat_id                 bigint  null,
+    user_id                 bigint  null,
+    message_text            text null,
+    chat_username           text null,
+    username                text null,
+    date                    int  null,
+    replied_to_user_id      bigint  null,
+    replied_to_message_text text null,
+    replied_to_message_id   bigint  null,
+    replied_to_message_date text null,
+    post_id                 bigint  null
 );
 
 create table table_users
 (
-    id              INTEGER
-        primary key auto_increment,
-    chat_id         BIGINT,
-    chat_username   TEXT,
-    user_id         BIGINT,
-    username        TEXT,
-    user_first_name TEXT,
-    user_last_name  TEXT
+    id              int auto_increment
+        primary key,
+    chat_id         bigint  null,
+    chat_username   text null,
+    user_id         bigint  null,
+    username        text null,
+    user_first_name text null,
+    user_last_name  text null
 );
 
 create table table_users_private
 (
-    id              INTEGER
-        primary key auto_increment,
-    user_id         BIGINT,
-    password        TEXT,
-    username        TEXT,
-    user_first_name TEXT,
-    user_last_name  TEXT,
-    date            DATETIME
+    id              int auto_increment
+        primary key,
+    user_id         bigint  null,
+    password        text null,
+    username        text null,
+    user_first_name text null,
+    user_last_name  text null,
+    date            int  null
 );

@@ -13,3 +13,8 @@ delete_kb = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='Спасибо', callback_data='callback_delete')]
     # кнопка удаления сообщения после нажатия "Спасибо"
 ])
+
+private_kb = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text='Зарегистрироваться', callback_data='callback_registration'),
+     InlineKeyboardButton(text='Узнать свои данные  для авторизации', callback_data='callback_my_data')]
+])
