@@ -105,7 +105,6 @@ async def second_step_asking_question(message: Message, state: FSMContext):
             await state.clear()  # чтобы не засорялся, у пользователя слетало состояние
 
 
-
 # Сохраняем только реплаи, которые были даны на вопросы через бот
 @router.message(ChatTypeFilter(chat_type=["group"]))
 async def process_message(message: Message):
@@ -117,17 +116,18 @@ async def process_message(message: Message):
         else:
             if check_message(message.reply_to_message.message_id):
                 data_for_db = {'message_id': message.message_id,
-                           'chat_id': message.chat.id,
-                           'user_id': message.from_user.id,
-                           'message_text': message.text,
-                           'chat_username': message.chat.title,
-                           'username': message.from_user.username,
-                           'date': int(message.date.timestamp()),
-                           'replied_to_user_id': message.reply_to_message.from_user.id if message.reply_to_message else None,
-                           'replied_to_message_text': message.reply_to_message.text if message.reply_to_message else None,
-                           'replied_to_message_id': message.reply_to_message.message_id if message.reply_to_message else None,
-                           'replied_to_message_date': int(message.reply_to_message.date.timestamp()) if message.reply_to_message else None
-                           }
+                               'chat_id': message.chat.id,
+                               'user_id': message.from_user.id,
+                               'message_text': message.text,
+                               'chat_username': message.chat.title,
+                               'username': message.from_user.username,
+                               'date': int(message.date.timestamp()),
+                               'replied_to_user_id': message.reply_to_message.from_user.id if message.reply_to_message else None,
+                               'replied_to_message_text': message.reply_to_message.text if message.reply_to_message else None,
+                               'replied_to_message_id': message.reply_to_message.message_id if message.reply_to_message else None,
+                               'replied_to_message_date': int(
+                                   message.reply_to_message.date.timestamp()) if message.reply_to_message else None
+                               }
                 insert_reply(data_for_db)
             else:
                 print("Сообщение не является вопросом, заданным через бота")
@@ -148,4 +148,3 @@ async def get_question(callback: CallbackQuery, state: FSMContext):
 @router.callback_query(F.data == 'callback_delete')
 async def delete_msg(callback: CallbackQuery):
     await callback.message.delete()
-
