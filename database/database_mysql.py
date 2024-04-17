@@ -105,13 +105,41 @@ def check_message(message_id):
         else:
             return False
 
+
 # GETS
 
-# def get_first_name(message_id):
-#     return True
-#
-# def get_last_name(message_id):
-#     return True
-#
-# def get_password(message_id):
-#     return True
+def get_first_name(user_id):
+    with get_db() as db:
+        user = db.query(models.PrivateUser).filter(models.PrivateUser.user_id == user_id).first()
+        if user:
+            return user.user_first_name
+        else:
+            return None
+
+
+def get_last_name(user_id):
+    with get_db() as db:
+        user = db.query(models.PrivateUser).filter(models.PrivateUser.user_id == user_id).first()
+        if user:
+            return user.user_last_name
+        else:
+            return None
+
+
+def get_user_id(user_id):
+    with get_db() as db:
+        user = db.query(models.PrivateUser).filter(models.PrivateUser.user_id == user_id).first()
+        if user:
+            return user.user_id
+        else:
+            return None
+
+
+# Доработать расшифровку пароля, когда будет доделана авторизация в веб
+def get_password(user_id):
+    with get_db() as db:
+        user = db.query(models.PrivateUser).filter(models.PrivateUser.user_id == user_id).first()
+        if user:
+            return user.password
+        else:
+            return None

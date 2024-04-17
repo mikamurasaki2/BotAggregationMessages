@@ -117,7 +117,7 @@ async def process_asking_question(message: Message, state: FSMContext):
                    'message_text': message.text,
                    'chat_username': message.chat.title,
                    'username': message.from_user.username,
-                   'date': (message.date.timestamp()),
+                   'date': int(message.date.timestamp()),
                    }
     if data["question"] == ".":
         await message.answer(f'Ваш вопрос не будет записан!',
@@ -170,7 +170,10 @@ async def save_reply_from_process_message(message: Message):
 # Сделать get в db и доделать
 @router.callback_query(F.data == 'callback_my_data')
 async def get_data(callback: CallbackQuery, state: FSMContext):
-    await callback.message.edit_text('Тут должны быть ваши данные:',
+    await callback.message.edit_text(f'Тут должны быть ваши данные\n'
+                                     f'\nФИО: {get_last_name(callback.from_user.id)} {get_first_name(callback.from_user.id)}'
+                                     f'\nВаш логин для веб-приложения: {get_user_id(callback.from_user.id)}'
+                                     f'\nВаш пароль для веб-приложения: {get_password(callback.from_user.id)}',
                                      reply_markup=inline_buttons.thank_kb)
     await callback.answer()
 
