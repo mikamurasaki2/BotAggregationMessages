@@ -2,9 +2,9 @@ import asyncio
 import logging
 from aiogram import Bot, Dispatcher
 from config import TOKEN
-#from handlers import inline_handlers_mysql
 from handlers import inline_handlers_2_mysql
 #from handlers import inline_handlers_sql
+#from handlers import inline_handlers_mysql
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
