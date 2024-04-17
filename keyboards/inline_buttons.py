@@ -5,13 +5,22 @@ main_kb = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='Посмотреть доску с вопросами', url='https://youtube.com'),
      # url кнопка для веб-приложения
      InlineKeyboardButton(text='Задать вопрос', callback_data='callback_question')],  # по идее кнопка для вызова fsm
-    [InlineKeyboardButton(text='Закрыть', callback_data='callback_delete')]
+    [InlineKeyboardButton(text='Закрыть', callback_data='callback_thank')]
     # кнопка удаления сообщения после нажатия "Отмена"
 ])
 
 delete_kb = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text='Спасибо', callback_data='callback_delete')]
+    [InlineKeyboardButton(text='Отмена', callback_data='callback_delete')]
+    # кнопка удаления сообщения после нажатия "Отмена"
+])
+
+thank_kb = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text='Спасибо', callback_data='callback_thank')]
     # кнопка удаления сообщения после нажатия "Спасибо"
+])
+
+my_data_kb = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text='Мои данные', callback_data='callback_my_data')]
 ])
 
 private_kb = InlineKeyboardMarkup(inline_keyboard=[
