@@ -224,8 +224,10 @@ async def get_thank_message(callback: CallbackQuery, state: FSMContext):
 async def get_thank_message(callback: CallbackQuery, state: FSMContext):
     if delete_user(callback.from_user.id):
         await callback.message.edit_text('Ваша учетная запись была удалена из базы данных.'
-                                         '\nМожете повторить вход в веб-приложение по логину и с новым паролем.',
+                                         '\nМожете повторить вход в веб-приложение по логину и с новым паролем, '
+                                         'после повторной регистрации через /start.',
                                          reply_markup=inline_buttons.thank_kb)
     else:
-        await callback.message.edit_text('Вы не найдены в базе данных пользователей. Подтвердите свое участие в боте /start',
+        await callback.message.edit_text('Вы не найдены в базе данных пользователей. Подтвердите свое участие в боте, '
+                                         'отправив или выбрав команду /start',
                                          reply_markup=inline_buttons.thank_kb)
