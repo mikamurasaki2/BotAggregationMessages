@@ -8,7 +8,7 @@ import database.models as models
 # import models
 
 
-engine = create_engine('mysql+mysqlconnector://root:@localhost/maindb5')
+engine = create_engine('mysql+mysqlconnector://root:@localhost/maindb6')
 Session = sessionmaker(bind=engine)
 
 
@@ -135,11 +135,13 @@ def get_user_id(user_id):
             return None
 
 
-# Доработать расшифровку пароля, когда будет доделана авторизация в веб
-def get_password(user_id):
+# Удалить пользователя
+def delete_user(user_id):
     with get_db() as db:
         user = db.query(models.PrivateUser).filter(models.PrivateUser.user_id == user_id).first()
         if user:
-            return user.password
+            db.delete(user)
+            db.commit()
+            return True
         else:
-            return None
+            return False

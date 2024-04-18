@@ -27,7 +27,7 @@ class Question(StatesGroup):
 # Регистрация в ЛС бота для авторизации в веб-приложении
 @router.message(ChatTypeFilter(chat_type=["private"]), CommandStart())
 async def command_private_registration_start(message: Message):
-    await message.answer('Регистрация (ФИО) и узнать свои данные (логин и пароль) /start',
+    await message.answer('Регистрация (ФИО), узнать свои данные и забыл пароль /start',
                          reply_markup=inline_buttons.private_kb)
 
 
@@ -173,7 +173,7 @@ async def get_data(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text(f'Тут должны быть ваши данные\n'
                                      f'\nФИО: {get_last_name(callback.from_user.id)} {get_first_name(callback.from_user.id)}'
                                      f'\nВаш логин для веб-приложения: {get_user_id(callback.from_user.id)}'
-                                     f'\nВаш пароль для веб-приложения: {get_password(callback.from_user.id)}',
+                                     f'\nВаш пароль для веб-приложения: {delete_user(callback.from_user.id)}',
                                      reply_markup=inline_buttons.thank_kb)
     await callback.answer()
 
@@ -217,3 +217,15 @@ async def get_delete_message(callback: CallbackQuery, state: FSMContext):
 async def get_thank_message(callback: CallbackQuery, state: FSMContext):
     await callback.message.delete()
     await state.clear()
+
+
+# Удаление профиля пользователя, когда он забыл пароль для восстановления
+@router.callback_query(F.data == 'callback_password')
+async def get_thank_message(callback: CallbackQuery, state: FSMContext):
+    if delete_user(callback.from_user.id):
+        await callback.message.edit_text('Ваша учетная запись была удалена из базы данных.'
+                                         '\nМожете повторить вход в веб-приложение по логину и с новым паролем.',
+                                         reply_markup=inline_buttons.thank_kb)
+    else:
+        await callback.message.edit_text('Вы не найдены в базе данных пользователей. Подтвердите свое участие в боте /start',
+                                         reply_markup=inline_buttons.thank_kb)

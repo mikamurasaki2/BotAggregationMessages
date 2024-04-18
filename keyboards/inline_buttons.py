@@ -25,5 +25,6 @@ my_data_kb = InlineKeyboardMarkup(inline_keyboard=[
 
 private_kb = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='Зарегистрироваться', callback_data='callback_registration'),
-     InlineKeyboardButton(text='Узнать свои данные  для авторизации', callback_data='callback_my_data')]
+     InlineKeyboardButton(text='Узнать свои данные  для авторизации', callback_data='callback_my_data')],
+    [InlineKeyboardButton(text='Забыл пароль', callback_data='callback_password')]
 ])
