@@ -4,12 +4,13 @@ from aiogram import F, Router
 from aiogram.filters import CommandStart, Command
 from aiogram.types import Message, CallbackQuery
 
-# from database.database_sql import Database
+from database.database_sql import Database
 from filters.chat_filters import ChatTypeFilter
 from keyboards import inline_buttons
 
 from bot import bot
-from database.database_mysql import *
+
+# from database.database_mysql import *
 
 router = Router()
 
@@ -40,6 +41,20 @@ async def process_first_name(message: Message, state: FSMContext):
                          reply_markup=inline_buttons.delete_kb)
 
 
+# Создаем дб с таблицей
+db_example = Database('example.db')
+
+# таблица с данными пользователей лс
+columns_users_private = [('id', 'INTEGER PRIMARY KEY AUTOINCREMENT'),
+                         ('user_id', 'INTEGER'),
+                         ('password', 'TEXT'),
+                         ('username', 'TEXT'),
+                         ('user_first_name', 'TEXT'),
+                         ('user_last_name', 'TEXT'),
+                         ('date', 'INTEGER')]
+db_example.create_table('table_users_private', columns_users_private)
+
+
 # Получение фамилии и запись данных в бд
 @router.message(About.last_name)
 async def process_last_name(message: Message, state: FSMContext):
@@ -55,8 +70,8 @@ async def process_last_name(message: Message, state: FSMContext):
         'date': int(message.date.timestamp()),
     }
     # Попытка проверить, что пользователь существует
-    if not check_private_user(message.from_user.id):
-        insert_private_user(data_for_db)
+    if db_example.check_value('table_users_private', 'user_id', message.from_user.id):
+        db_example.insert_data('table_users_private', data_for_db)
         await message.answer(f'Спасибо, вы внесены в базу данных!'
                              f'\nВаш логин для регистрации в веб-приложении: {data_for_db["user_id"]}'
                              f'\nВаше ФИО: {data_for_db["user_first_name"]} {data_for_db["user_last_name"]}',
@@ -67,6 +82,17 @@ async def process_last_name(message: Message, state: FSMContext):
         await message.answer(f'Вы уже внесены в базу данных.',
                              reply_markup=inline_buttons.my_data_kb)
         await state.clear()
+
+
+# таблица с участниками чата
+columns_users = [('id', 'INTEGER PRIMARY KEY AUTOINCREMENT'),
+                 ('chat_id', 'INTEGER'),
+                 ('chat_username', 'TEXT'),
+                 ('user_id', 'INTEGER'),
+                 ('username', 'TEXT'),
+                 ('user_first_name', 'TEXT'),
+                 ('user_last_name', 'TEXT')]
+db_example.create_table('table_users', columns_users)
 
 
 # Запись участников группового чата в бд по команде start
@@ -82,8 +108,10 @@ async def command_group_registration_start(message: Message):
         'user_last_name': message.from_user.last_name
     }
     # Попытка проверить, что пользователь не существует
-    if check_user(user_id=message.from_user.id, chat_id=message.chat.id):
-        insert_user(data_for_db)
+    if db_example.check_value('table_users', 'user_id', message.from_user.id) or db_example.check_value('table_users',
+                                                                                                        'chat_id',
+                                                                                                        message.chat.id):
+        db_example.insert_data('table_users', data_for_db)
         await message.answer(f'Спасибо, вы стали участником чата в веб-приложении, {message.from_user.username}!',
                              reply_markup=inline_buttons.thank_kb)
     else:
@@ -104,6 +132,20 @@ async def command_feature(message: Message):
 #     await message.bot.send_photo(message.chat.id, file_id)
 #     file_info = await message.bot.get_file(message.photo[-1].file_id)
 #     await message.photo[-1].download(file_info.file_path.split('photos/')[1])
+
+
+# таблица с данными сообщений
+columns_messages = [('id', 'INTEGER PRIMARY KEY AUTOINCREMENT'),
+                    ('message_id', 'INTEGER'),
+                    ('chat_id', 'INTEGER'),
+                    ('user_id', 'INTEGER'),
+                    ('message_text', 'TEXT'),
+                    ('chat_username', 'TEXT'),
+                    ('username', 'TEXT'),
+                    ('date', 'INTEGER')
+                    ]
+db_example.create_table('table_messages', columns_messages)
+
 
 # Запись в бд отправленного вопроса пользователя
 @router.message(ChatTypeFilter(chat_type=["group"]), Question.question)
@@ -129,12 +171,29 @@ async def process_asking_question(message: Message, state: FSMContext):
                                  reply_markup=inline_buttons.delete_kb)
             await state.clear()
         else:
-            insert_message(data_for_db)
+            db_example.insert_data('table_messages', data_for_db)
             await message.answer(f'Спасибо, ваш вопрос принят!'
                                  f'\nВопрос задан: {message.from_user.id}'
                                  f'\nВаш вопрос: {data["question"]}',
                                  reply_markup=inline_buttons.thank_kb)
             await state.clear()  # чтобы не засорялся, у пользователя слетало состояние
+
+
+# таблица с данными сообщений
+columns_replies = [('id', 'INTEGER PRIMARY KEY AUTOINCREMENT'),
+                   ('message_id', 'INTEGER'),
+                   ('chat_id', 'INTEGER'),
+                   ('user_id', 'INTEGER'),
+                   ('message_text', 'TEXT'),
+                   ('chat_username', 'TEXT'),
+                   ('username', 'TEXT'),
+                   ('date', 'INTEGER'),
+                   ('replied_to_user_id', 'INTEGER'),
+                   ('replied_to_message_text', 'TEXT'),
+                   ('replied_to_message_id', 'INTEGER'),
+                   ('replied_to_message_date', 'TEXT')
+                   ]
+db_example.create_table('table_replies', columns_replies)
 
 
 # Сохраняем только реплаи, которые были даны на вопросы через бота
@@ -146,7 +205,7 @@ async def save_reply_from_process_message(message: Message):
             await message.answer(f'Бот на данный момент принимает ответы только в текстовом виде.',
                                  reply_markup=inline_buttons.delete_kb)
         else:
-            if check_message(message.reply_to_message.message_id):
+            if not db_example.check_value('table_messages', 'message_id', message.reply_to_message.message_id):
                 data_for_db = {'message_id': message.message_id,
                                'chat_id': message.chat.id,
                                'user_id': message.from_user.id,
@@ -160,19 +219,20 @@ async def save_reply_from_process_message(message: Message):
                                'replied_to_message_date': int(
                                    message.reply_to_message.date.timestamp()) if message.reply_to_message else None
                                }
-                insert_reply(data_for_db)
+                db_example.insert_data('table_replies', data_for_db)
             else:
                 print("Сообщение не является вопросом, заданным через бота")
     # replied_message_id = message.reply_to_message.message_id  # Айди сообщения, на которое ответили (основное сообщение)
     # reply_message_id = message.message_id  # Айди реплая
 
 
-# Сделать get в db и доделать
+# Сделать для получения данный для sqlite3
 @router.callback_query(F.data == 'callback_my_data')
 async def get_data(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text(f'Тут должны быть ваши данные\n'
-                                     f'\nФИО: {get_last_name(callback.from_user.id)} {get_first_name(callback.from_user.id)}'
-                                     f'\nВаш логин для веб-приложения: {get_user_id(callback.from_user.id)}',
+                                     f'\nФИО: {db_example.get_value("table_users_private", "user_first_name", callback.from_user.id)} '
+                                     f'{db_example.get_value("table_users_private", "user_last_name", callback.from_user.id)}'
+                                     f'\nВаш логин для веб-приложения: {db_example.get_value("table_users_private", "user_id", callback.from_user.id)}',
                                      reply_markup=inline_buttons.thank_kb)
     await callback.answer()
 
@@ -181,7 +241,7 @@ async def get_data(callback: CallbackQuery, state: FSMContext):
 @router.callback_query(F.data == 'callback_registration')
 async def get_registration(callback: CallbackQuery, state: FSMContext):
     # Попытка проверить, что пользователь не существует
-    if check_private_user(callback.from_user.id):
+    if not db_example.check_value('table_users_private', 'user_id', callback.from_user.id):
         await callback.message.edit_text(f'Вы уже внесены в базу данных.',
                                          reply_markup=inline_buttons.my_data_kb)
         await state.clear()
@@ -221,7 +281,7 @@ async def get_thank_message(callback: CallbackQuery, state: FSMContext):
 # Удаление профиля пользователя, когда он забыл пароль для восстановления
 @router.callback_query(F.data == 'callback_password')
 async def get_thank_message(callback: CallbackQuery, state: FSMContext):
-    if delete_user(callback.from_user.id):
+    if db_example.delete_user('table_users_private', 'user_id', callback.from_user.id):
         await callback.message.edit_text('Ваша учетная запись была удалена из базы данных.'
                                          '\nМожете повторить вход в веб-приложение по логину и с новым паролем, '
                                          'после повторной регистрации через /start.',
