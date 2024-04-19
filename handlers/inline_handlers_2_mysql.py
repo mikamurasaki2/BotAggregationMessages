@@ -4,11 +4,8 @@ from aiogram import F, Router
 from aiogram.filters import CommandStart, Command
 from aiogram.types import Message, CallbackQuery
 
-# from database.database_sql import Database
 from filters.chat_filters import ChatTypeFilter
 from keyboards import inline_buttons
-
-from bot import bot
 from database.database_mysql import *
 
 router = Router()

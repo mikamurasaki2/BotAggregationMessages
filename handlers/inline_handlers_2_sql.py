@@ -8,10 +8,6 @@ from database.database_sql import Database
 from filters.chat_filters import ChatTypeFilter
 from keyboards import inline_buttons
 
-from bot import bot
-
-# from database.database_mysql import *
-
 router = Router()
 
 
