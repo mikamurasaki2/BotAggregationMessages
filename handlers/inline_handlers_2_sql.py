@@ -42,7 +42,7 @@ async def process_first_name(message: Message, state: FSMContext):
 
 
 # Создаем дб с таблицей
-db_example = Database('example.db')
+db_example = Database("example.db")
 
 # таблица с данными пользователей лс
 columns_users_private = [('id', 'INTEGER PRIMARY KEY AUTOINCREMENT'),
@@ -52,7 +52,7 @@ columns_users_private = [('id', 'INTEGER PRIMARY KEY AUTOINCREMENT'),
                          ('user_first_name', 'TEXT'),
                          ('user_last_name', 'TEXT'),
                          ('date', 'INTEGER')]
-db_example.create_table('table_users_private', columns_users_private)
+db_example.create_table("table_users_private", columns_users_private)
 
 
 # Получение фамилии и запись данных в бд
@@ -70,8 +70,8 @@ async def process_last_name(message: Message, state: FSMContext):
         'date': int(message.date.timestamp()),
     }
     # Попытка проверить, что пользователь существует
-    if db_example.check_value('table_users_private', 'user_id', message.from_user.id):
-        db_example.insert_data('table_users_private', data_for_db)
+    if db_example.check_value("table_users_private", "user_id", message.from_user.id):
+        db_example.insert_data("table_users_private", data_for_db)
         await message.answer(f'Спасибо, вы внесены в базу данных!'
                              f'\nВаш логин для регистрации в веб-приложении: {data_for_db["user_id"]}'
                              f'\nВаше ФИО: {data_for_db["user_first_name"]} {data_for_db["user_last_name"]}',
@@ -92,7 +92,7 @@ columns_users = [('id', 'INTEGER PRIMARY KEY AUTOINCREMENT'),
                  ('username', 'TEXT'),
                  ('user_first_name', 'TEXT'),
                  ('user_last_name', 'TEXT')]
-db_example.create_table('table_users', columns_users)
+db_example.create_table("table_users", columns_users)
 
 
 # Запись участников группового чата в бд по команде start
@@ -108,10 +108,9 @@ async def command_group_registration_start(message: Message):
         'user_last_name': message.from_user.last_name
     }
     # Попытка проверить, что пользователь не существует
-    if db_example.check_value('table_users', 'user_id', message.from_user.id) or db_example.check_value('table_users',
-                                                                                                        'chat_id',
-                                                                                                        message.chat.id):
-        db_example.insert_data('table_users', data_for_db)
+    if (db_example.check_value("table_users", "user_id", message.from_user.id)
+            or db_example.check_value("table_users", "chat_id", message.chat.id)):
+        db_example.insert_data("table_users", data_for_db)
         await message.answer(f'Спасибо, вы стали участником чата в веб-приложении, {message.from_user.username}!',
                              reply_markup=inline_buttons.thank_kb)
     else:
@@ -144,7 +143,7 @@ columns_messages = [('id', 'INTEGER PRIMARY KEY AUTOINCREMENT'),
                     ('username', 'TEXT'),
                     ('date', 'INTEGER')
                     ]
-db_example.create_table('table_messages', columns_messages)
+db_example.create_table("table_messages", columns_messages)
 
 
 # Запись в бд отправленного вопроса пользователя
@@ -171,7 +170,7 @@ async def process_asking_question(message: Message, state: FSMContext):
                                  reply_markup=inline_buttons.delete_kb)
             await state.clear()
         else:
-            db_example.insert_data('table_messages', data_for_db)
+            db_example.insert_data("table_messages", data_for_db)
             await message.answer(f'Спасибо, ваш вопрос принят!'
                                  f'\nВопрос задан: {message.from_user.id}'
                                  f'\nВаш вопрос: {data["question"]}',
@@ -193,7 +192,7 @@ columns_replies = [('id', 'INTEGER PRIMARY KEY AUTOINCREMENT'),
                    ('replied_to_message_id', 'INTEGER'),
                    ('replied_to_message_date', 'TEXT')
                    ]
-db_example.create_table('table_replies', columns_replies)
+db_example.create_table("table_replies", columns_replies)
 
 
 # Сохраняем только реплаи, которые были даны на вопросы через бота
@@ -205,7 +204,7 @@ async def save_reply_from_process_message(message: Message):
             await message.answer(f'Бот на данный момент принимает ответы только в текстовом виде.',
                                  reply_markup=inline_buttons.delete_kb)
         else:
-            if not db_example.check_value('table_messages', 'message_id', message.reply_to_message.message_id):
+            if not db_example.check_value("table_messages", "message_id", message.reply_to_message.message_id):
                 data_for_db = {'message_id': message.message_id,
                                'chat_id': message.chat.id,
                                'user_id': message.from_user.id,
@@ -219,7 +218,7 @@ async def save_reply_from_process_message(message: Message):
                                'replied_to_message_date': int(
                                    message.reply_to_message.date.timestamp()) if message.reply_to_message else None
                                }
-                db_example.insert_data('table_replies', data_for_db)
+                db_example.insert_data("table_replies", data_for_db)
             else:
                 print("Сообщение не является вопросом, заданным через бота")
     # replied_message_id = message.reply_to_message.message_id  # Айди сообщения, на которое ответили (основное сообщение)
@@ -241,7 +240,7 @@ async def get_data(callback: CallbackQuery, state: FSMContext):
 @router.callback_query(F.data == 'callback_registration')
 async def get_registration(callback: CallbackQuery, state: FSMContext):
     # Попытка проверить, что пользователь не существует
-    if not db_example.check_value('table_users_private', 'user_id', callback.from_user.id):
+    if not db_example.check_value("table_users_private", "user_id", callback.from_user.id):
         await callback.message.edit_text(f'Вы уже внесены в базу данных.',
                                          reply_markup=inline_buttons.my_data_kb)
         await state.clear()

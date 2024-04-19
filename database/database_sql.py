@@ -56,30 +56,3 @@ class Database:
         else:
             return None
 
-    #
-    # def get_last_name(user_id):
-    #     with get_db() as db:
-    #         user = db.query(models.PrivateUser).filter(models.PrivateUser.user_id == user_id).first()
-    #         if user:
-    #             return user.user_last_name
-    #         else:
-    #             return None
-    #
-    # def get_user_id(user_id):
-    #     with get_db() as db:
-    #         user = db.query(models.PrivateUser).filter(models.PrivateUser.user_id == user_id).first()
-    #         if user:
-    #             return user.user_id
-    #         else:
-    #             return None
-    #
-    # # Удалить пользователя
-    # def delete_user(user_id):
-    #     with get_db() as db:
-    #         user = db.query(models.PrivateUser).filter(models.PrivateUser.user_id == user_id).first()
-    #         if user:
-    #             db.delete(user)
-    #             db.commit()
-    #             return True
-    #         else:
-    #             return False
