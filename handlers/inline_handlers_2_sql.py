@@ -195,7 +195,7 @@ columns_replies = [('id', 'INTEGER PRIMARY KEY AUTOINCREMENT'),
 db_example.create_table("table_replies", columns_replies)
 
 
-# Сохраняем только реплаи, которые были даны на вопросы через бота
+# Сохраняем только реплаи, которые были даны на вопросы при помощи бота
 @router.message(ChatTypeFilter(chat_type=["group"]))
 async def save_reply_from_process_message(message: Message):
     # Check if the message is a reply
@@ -227,11 +227,13 @@ async def save_reply_from_process_message(message: Message):
 
 # Сделать для получения данный для sqlite3
 @router.callback_query(F.data == 'callback_my_data')
-async def get_data(callback: CallbackQuery, state: FSMContext):
+async def get_data(callback: CallbackQuery):
     await callback.message.edit_text(f'Тут должны быть ваши данные\n'
-                                     f'\nФИО: {db_example.get_value("table_users_private", "user_first_name", callback.from_user.id)} '
+                                     f'\nФИО: '
+                                     f'{db_example.get_value("table_users_private", "user_first_name", callback.from_user.id)} '
                                      f'{db_example.get_value("table_users_private", "user_last_name", callback.from_user.id)}'
-                                     f'\nВаш логин для веб-приложения: {db_example.get_value("table_users_private", "user_id", callback.from_user.id)}',
+                                     f'\nВаш логин для веб-приложения: '
+                                     f'{db_example.get_value("table_users_private", "user_id", callback.from_user.id)}',
                                      reply_markup=inline_buttons.thank_kb)
     await callback.answer()
 
@@ -279,7 +281,7 @@ async def get_thank_message(callback: CallbackQuery, state: FSMContext):
 
 # Удаление профиля пользователя, когда он забыл пароль для восстановления
 @router.callback_query(F.data == 'callback_password')
-async def get_thank_message(callback: CallbackQuery, state: FSMContext):
+async def get_thank_message(callback: CallbackQuery):
     if db_example.delete_user('table_users_private', 'user_id', callback.from_user.id):
         await callback.message.edit_text('Ваша учетная запись была удалена из базы данных.'
                                          '\nМожете повторить вход в веб-приложение по логину и с новым паролем, '
