@@ -7,8 +7,8 @@ import database.models as models
 
 # import models
 
-engine = create_engine('mysql+mysqlconnector://root:@localhost/maindb7')
-#engine = create_engine('mysql+mysqlconnector://root:root@localhost/maindb')
+#engine = create_engine('mysql+mysqlconnector://root:@localhost/maindb7')
+engine = create_engine('mysql+mysqlconnector://root:root@localhost/maindb')
 Session = sessionmaker(bind=engine)
 
 
