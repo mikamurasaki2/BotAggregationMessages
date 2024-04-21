@@ -7,8 +7,8 @@ import database.models as models
 
 # import models
 
-
-engine = create_engine('mysql+mysqlconnector://root:@localhost/maindb6')
+engine = create_engine('mysql+mysqlconnector://root:@localhost/maindb7')
+#engine = create_engine('mysql+mysqlconnector://root:root@localhost/maindb')
 Session = sessionmaker(bind=engine)
 
 
@@ -24,7 +24,7 @@ def insert_private_user(data):
     with get_db() as db:
         new_user = models.PrivateUser(user_id=data['user_id'], password=data['password'], username=data['username'],
                                       user_first_name=data['user_first_name'], user_last_name=data['user_last_name'],
-                                      date=data['date'])
+                                      date=data['date'], is_admin=data['is_admin'])
         db.add(new_user)
         db.commit()
 
@@ -33,7 +33,7 @@ def insert_user(data):
     with get_db() as db:
         new_user = models.User(chat_id=data['chat_id'], chat_username=data['chat_username'], user_id=data['user_id'],
                                username=data['username'], user_first_name=data['user_first_name'],
-                               user_last_name=data['user_last_name'])
+                               user_last_name=data['user_last_name'], is_admin=data['is_admin'])
         db.add(new_user)
         db.commit()
 
@@ -55,7 +55,8 @@ def insert_reply(data):
                                  replied_to_user_id=data['replied_to_user_id'],
                                  replied_to_message_text=data['replied_to_message_text'],
                                  replied_to_message_id=data['replied_to_message_id'],
-                                 replied_to_message_date=data['replied_to_message_date'])
+                                 replied_to_message_date=data['replied_to_message_date'],
+                                 post_id=data['message_id'])
         db.add(new_reply)
         db.commit()
 

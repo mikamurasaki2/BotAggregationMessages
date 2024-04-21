@@ -14,6 +14,7 @@ router = Router()
 class About(StatesGroup):
     first_name = State()
     last_name = State()
+    password = State()
     confirm = State()
 
 
@@ -37,20 +38,31 @@ async def process_first_name(message: Message, state: FSMContext):
                          reply_markup=inline_buttons.delete_kb)
 
 
-# Получение фамилии и запись данных в бд
+# Получение фамилии
 @router.message(About.last_name)
 async def process_last_name(message: Message, state: FSMContext):
     await state.update_data(last_name=message.text)
+    await state.set_state(About.password)
+    await message.answer("Введите пароль:",
+                         reply_markup=inline_buttons.delete_kb)
+
+
+# Получение фамилии и запись данных в бд
+@router.message(About.password)
+async def process_password(message: Message, state: FSMContext):
+    await state.update_data(password=message.text)
     await state.set_state(About.confirm)
     data = await state.get_data()
     data_for_db = {
         'user_id': message.from_user.id,
-        'password': None,
+        'password': data["password"],
         'username': message.from_user.username,
         'user_first_name': data["first_name"],
         'user_last_name': data["last_name"],
         'date': int(message.date.timestamp()),
+        'is_admin': 0
     }
+    print(data)
     # Попытка проверить, что пользователь существует
     if not check_private_user(message.from_user.id):
         insert_private_user(data_for_db)
@@ -76,7 +88,8 @@ async def command_group_registration_start(message: Message):
         'user_id': message.from_user.id,
         'username': message.from_user.username,
         'user_first_name': message.from_user.first_name,
-        'user_last_name': message.from_user.last_name
+        'user_last_name': message.from_user.last_name,
+        'is_admin': 0
     }
     # Попытка проверить, что пользователь не существует
     if check_user(user_id=message.from_user.id, chat_id=message.chat.id):
@@ -167,11 +180,18 @@ async def save_reply_from_process_message(message: Message):
 # Сделать get в db и доделать
 @router.callback_query(F.data == 'callback_my_data')
 async def get_data(callback: CallbackQuery, state: FSMContext):
-    await callback.message.edit_text(f'Тут должны быть ваши данные\n'
+    if check_private_user(callback.from_user.id):
+        await callback.message.edit_text(f'Тут должны быть ваши данные\n'
                                      f'\nФИО: {get_last_name(callback.from_user.id)} {get_first_name(callback.from_user.id)}'
                                      f'\nВаш логин для веб-приложения: {get_user_id(callback.from_user.id)}',
                                      reply_markup=inline_buttons.thank_kb)
-    await callback.answer()
+        await callback.answer()
+    else:
+        await callback.message.edit_text(f'Вы еще не внесены в базу данных приложения. '
+                                         f'Пожалуйста, выберите команду /start',
+                                         reply_markup=inline_buttons.thank_kb)
+        await callback.answer()
+
 
 
 # Обработчик на колбэк на регистрацию

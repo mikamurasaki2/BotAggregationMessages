@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text
+from sqlalchemy import Column, Integer, String, Text, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
@@ -32,6 +32,7 @@ class Reply(Base):
     replied_to_message_text = Column(Text)
     replied_to_message_id = Column(Integer)
     replied_to_message_date = Column(Text)
+    post_id = Column(Text)
 
 
 class User(Base):
@@ -44,6 +45,7 @@ class User(Base):
     username = Column(String)
     user_first_name = Column(String)
     user_last_name = Column(String)
+    is_admin = Column(Boolean)
 
 
 class PrivateUser(Base):
@@ -56,3 +58,4 @@ class PrivateUser(Base):
     user_first_name = Column(String)
     user_last_name = Column(String)
     date = Column(Integer)
+    is_admin = Column(Boolean)
