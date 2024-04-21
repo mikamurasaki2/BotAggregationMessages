@@ -1,8 +1,11 @@
+import hashlib
+
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
 from aiogram import F, Router
 from aiogram.filters import CommandStart, Command
 from aiogram.types import Message, CallbackQuery
+import bcrypt
 
 from filters.chat_filters import ChatTypeFilter
 from keyboards import inline_buttons
@@ -53,9 +56,11 @@ async def process_password(message: Message, state: FSMContext):
     await state.update_data(password=message.text)
     await state.set_state(About.confirm)
     data = await state.get_data()
+    hashed_password = bcrypt.hashpw(data["password"].encode('utf-8'), bcrypt.gensalt())
+    hashed_password_sha256 = hashlib.sha256(data["password"].encode()).hexdigest()
     data_for_db = {
         'user_id': message.from_user.id,
-        'password': data["password"],
+        'password': data["password"], # hashed_password_sha256,
         'username': message.from_user.username,
         'user_first_name': data["first_name"],
         'user_last_name': data["last_name"],
