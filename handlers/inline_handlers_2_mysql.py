@@ -30,6 +30,7 @@ class Question(StatesGroup):
 async def command_private_registration_start(message: Message):
     await message.answer('Регистрация (ФИО), узнать свои данные и забыл пароль /start',
                          reply_markup=inline_buttons.private_kb)
+    await message.delete()
 
 
 # Получение имени
@@ -37,8 +38,7 @@ async def command_private_registration_start(message: Message):
 async def process_first_name(message: Message, state: FSMContext):
     await state.update_data(first_name=message.text)
     await state.set_state(About.last_name)
-    await message.answer("Введите свою фамилию:",
-                         reply_markup=inline_buttons.delete_kb)
+    await message.answer("Введите свою фамилию:")
 
 
 # Получение фамилии
@@ -46,8 +46,7 @@ async def process_first_name(message: Message, state: FSMContext):
 async def process_last_name(message: Message, state: FSMContext):
     await state.update_data(last_name=message.text)
     await state.set_state(About.password)
-    await message.answer("Введите пароль:",
-                         reply_markup=inline_buttons.delete_kb)
+    await message.answer("Введите пароль:")
 
 
 # Получение фамилии и запись данных в бд
@@ -60,24 +59,22 @@ async def process_password(message: Message, state: FSMContext):
     hashed_password_sha256 = hashlib.sha256(data["password"].encode()).hexdigest()
     data_for_db = {
         'user_id': message.from_user.id,
-        'password': data["password"], # hashed_password_sha256,
+        'password': data["password"],  # hashed_password_sha256,
         'username': message.from_user.username,
         'user_first_name': data["first_name"],
         'user_last_name': data["last_name"],
-        'date': int(message.date.timestamp()),
-        'is_admin': 0
+        'date': int(message.date.timestamp())
     }
+    await message.delete()
     print(data)
     # Попытка проверить, что пользователь существует
     if not check_private_user(message.from_user.id):
         insert_private_user(data_for_db)
         await message.answer(f'Спасибо, вы внесены в базу данных!'
                              f'\nВаш логин для регистрации в веб-приложении: {data_for_db["user_id"]}'
-                             f'\nВаше ФИО: {data_for_db["user_first_name"]} {data_for_db["user_last_name"]}',
-                             reply_markup=inline_buttons.thank_kb)
+                             f'\nВаше ФИО: {data_for_db["user_first_name"]} {data_for_db["user_last_name"]}')
         await state.clear()
     else:
-        print("Пользователь уже существует!")
         await message.answer(f'Вы уже внесены в базу данных.',
                              reply_markup=inline_buttons.my_data_kb)
         await state.clear()
@@ -101,8 +98,9 @@ async def command_group_registration_start(message: Message):
         insert_user(data_for_db)
         await message.answer(f'Спасибо, вы стали участником чата в веб-приложении, {message.from_user.username}!',
                              reply_markup=inline_buttons.thank_kb)
+        await message.delete()
     else:
-        print("Пользователь уже существует")
+        await message.delete()
 
 
 # Вызов сообщения с функционалом бота: задать вопрос и перейти на сайт
@@ -110,6 +108,7 @@ async def command_group_registration_start(message: Message):
 async def command_feature(message: Message):
     await message.answer('Это основное сообщение тестирования команды /feature для вызова функций бота.',
                          reply_markup=inline_buttons.main_kb)
+    await message.delete()
 
 
 # Прототип хранения фото
@@ -134,22 +133,18 @@ async def process_asking_question(message: Message, state: FSMContext):
                    'username': message.from_user.username,
                    'date': int(message.date.timestamp()),
                    }
-    if data["question"] == ".":
-        await message.answer(f'Ваш вопрос не будет записан!',
+
+    if data["question"] is None:
+        await message.answer(f'Бот на данный момент принимает вопросы только в текстовом виде.',
+                             reply_markup=inline_buttons.thank_kb)
+        await state.clear()
+    else:
+        insert_message(data_for_db)
+        await message.answer(f'Спасибо, ваш вопрос принят!'
+                             f'\nВопрос задан: {message.from_user.id}'
+                             f'\nВаш вопрос: {data["question"]}',
                              reply_markup=inline_buttons.thank_kb)
         await state.clear()  # чтобы не засорялся, у пользователя слетало состояние
-    else:
-        if data["question"] is None:
-            await message.answer(f'Бот на данный момент принимает вопросы только в текстовом виде.',
-                                 reply_markup=inline_buttons.delete_kb)
-            await state.clear()
-        else:
-            insert_message(data_for_db)
-            await message.answer(f'Спасибо, ваш вопрос принят!'
-                                 f'\nВопрос задан: {message.from_user.id}'
-                                 f'\nВаш вопрос: {data["question"]}',
-                                 reply_markup=inline_buttons.thank_kb)
-            await state.clear()  # чтобы не засорялся, у пользователя слетало состояние
 
 
 # Сохраняем только реплаи, которые были даны на вопросы через бота
@@ -159,7 +154,7 @@ async def save_reply_from_process_message(message: Message):
     if message.reply_to_message:
         if message.text is None:
             await message.answer(f'Бот на данный момент принимает ответы только в текстовом виде.',
-                                 reply_markup=inline_buttons.delete_kb)
+                                 reply_markup=inline_buttons.thank_kb)
         else:
             if check_message(message.reply_to_message.message_id):
                 data_for_db = {'message_id': message.message_id,
@@ -173,13 +168,10 @@ async def save_reply_from_process_message(message: Message):
                                'replied_to_message_text': message.reply_to_message.text if message.reply_to_message else None,
                                'replied_to_message_id': message.reply_to_message.message_id if message.reply_to_message else None,
                                'replied_to_message_date': int(
-                                   message.reply_to_message.date.timestamp()) if message.reply_to_message else None
+                                   message.reply_to_message.date.timestamp()) if message.reply_to_message else None,
+                               'post_id': message.reply_to_message.message_id
                                }
                 insert_reply(data_for_db)
-            else:
-                print("Сообщение не является вопросом, заданным через бота")
-    # replied_message_id = message.reply_to_message.message_id  # Айди сообщения, на которое ответили (основное сообщение)
-    # reply_message_id = message.message_id  # Айди реплая
 
 
 # Сделать get в db и доделать
@@ -187,16 +179,15 @@ async def save_reply_from_process_message(message: Message):
 async def get_data(callback: CallbackQuery, state: FSMContext):
     if check_private_user(callback.from_user.id):
         await callback.message.edit_text(f'Тут должны быть ваши данные\n'
-                                     f'\nФИО: {get_last_name(callback.from_user.id)} {get_first_name(callback.from_user.id)}'
-                                     f'\nВаш логин для веб-приложения: {get_user_id(callback.from_user.id)}',
-                                     reply_markup=inline_buttons.thank_kb)
+                                         f'\nФИО: {get_last_name(callback.from_user.id)} {get_first_name(callback.from_user.id)}'
+                                         f'\nВаш логин для веб-приложения: {get_user_id(callback.from_user.id)}',
+                                         reply_markup=inline_buttons.thank_kb)
         await callback.answer()
     else:
         await callback.message.edit_text(f'Вы еще не внесены в базу данных приложения. '
                                          f'Пожалуйста, выберите команду /start',
                                          reply_markup=inline_buttons.thank_kb)
         await callback.answer()
-
 
 
 # Обработчик на колбэк на регистрацию
@@ -209,15 +200,14 @@ async def get_registration(callback: CallbackQuery, state: FSMContext):
         await state.clear()
     else:
         await state.set_state(About.first_name)
-        await callback.message.edit_text('Введите свое имя:',
-                                         reply_markup=inline_buttons.delete_kb)
+        await callback.message.edit_text('Введите свое имя:')
 
 
 # Обработчик на колбэк инлайн кнопки отправки вопроса
 @router.callback_query(F.data == 'callback_question')
 async def get_question(callback: CallbackQuery, state: FSMContext):
-    await callback.message.edit_text('Для отмены ввода отправьте "."'
-                                     '\nВведите вопрос:')
+    await callback.message.edit_text('Введите вопрос:',
+                                     reply_markup=inline_buttons.delete_kb)
     await state.update_data(message=callback.message.message_id)
     await state.set_state(Question.question)
     await callback.answer()
