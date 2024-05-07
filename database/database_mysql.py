@@ -33,7 +33,7 @@ def insert_user(data):
     with get_db() as db:
         new_user = models.User(chat_id=data['chat_id'], chat_username=data['chat_username'], user_id=data['user_id'],
                                username=data['username'], user_first_name=data['user_first_name'],
-                               user_last_name=data['user_last_name'], is_admin=data['is_admin'])
+                               user_last_name=data['user_last_name'])
         db.add(new_user)
         db.commit()
 
@@ -56,7 +56,7 @@ def insert_reply(data):
                                  replied_to_message_text=data['replied_to_message_text'],
                                  replied_to_message_id=data['replied_to_message_id'],
                                  replied_to_message_date=data['replied_to_message_date'],
-                                 post_id=data['message_id'])
+                                 post_id=data['replied_to_message_id'])
         db.add(new_reply)
         db.commit()
 
@@ -146,3 +146,25 @@ def delete_user(user_id):
             return True
         else:
             return False
+
+
+# def insert_bot_message(message_id, chat_id, date):
+#     with get_db() as db:
+#         new_message = models.BotMessage(message_id=message_id, chat_id=chat_id, date=date)
+#         db.add(new_message)
+#         db.commit()
+#
+#
+# def delete_message(message_id, chat_id):
+#     with get_db() as db:
+#         messages = db.query(models.BotMessage).filter(models.BotMessage.message_id == message_id).all()
+#         if messages:
+#             for message in messages:
+#                 if message.chat_id == chat_id:
+#                     db.delete(message)
+#                     db.commit()
+#                     return True
+#                 else:
+#                     return False
+#         else:
+#             return False

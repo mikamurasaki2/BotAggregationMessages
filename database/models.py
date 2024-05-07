@@ -15,6 +15,7 @@ class Message(Base):
     chat_username = Column(String)
     username = Column(String)
     date = Column(Integer)
+    #question_type = Column(Text)
 
 
 class Reply(Base):
@@ -32,7 +33,7 @@ class Reply(Base):
     replied_to_message_text = Column(Text)
     replied_to_message_id = Column(Integer)
     replied_to_message_date = Column(Text)
-    post_id = Column(Text)
+    post_id = Column(Integer)
 
 
 class User(Base):
@@ -45,7 +46,7 @@ class User(Base):
     username = Column(String)
     user_first_name = Column(String)
     user_last_name = Column(String)
-    is_admin = Column(Boolean)
+
 
 
 class PrivateUser(Base):

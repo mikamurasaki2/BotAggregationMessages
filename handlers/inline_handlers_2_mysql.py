@@ -63,7 +63,8 @@ async def process_password(message: Message, state: FSMContext):
         'username': message.from_user.username,
         'user_first_name': data["first_name"],
         'user_last_name': data["last_name"],
-        'date': int(message.date.timestamp())
+        'date': int(message.date.timestamp()),
+        'is_admin': 0
     }
     await message.delete()
     print(data)
@@ -90,8 +91,7 @@ async def command_group_registration_start(message: Message):
         'user_id': message.from_user.id,
         'username': message.from_user.username,
         'user_first_name': message.from_user.first_name,
-        'user_last_name': message.from_user.last_name,
-        'is_admin': 0
+        'user_last_name': message.from_user.last_name
     }
     # Попытка проверить, что пользователь не существует
     if check_user(user_id=message.from_user.id, chat_id=message.chat.id):
