@@ -6,7 +6,7 @@ main_kb = InlineKeyboardMarkup(inline_keyboard=[
      # url кнопка для веб-приложения
      InlineKeyboardButton(text='Задать вопрос', callback_data='callback_question_type')],
     [InlineKeyboardButton(text='Закрыть', callback_data='callback_thank')]
-    # кнопка удаления сообщения после нажатия "Отмена"
+    # кнопка удаления сообщения после нажатия "Спасибо"
 ])
 
 question_type_kb = InlineKeyboardMarkup(inline_keyboard=[
