@@ -7,7 +7,7 @@ import database.models as models
 
 # import models
 
-#engine = create_engine('mysql+mysqlconnector://root:@localhost/maindb7')
+#engine = create_engine('mysql+mysqlconnector://root:@localhost/maindb8')
 engine = create_engine('mysql+mysqlconnector://root:root@localhost/maindb')
 Session = sessionmaker(bind=engine)
 
@@ -42,7 +42,7 @@ def insert_message(data):
     with get_db() as db:
         new_message = models.Message(message_id=data['message_id'], chat_id=data['chat_id'], user_id=data['user_id'],
                                      message_text=data['message_text'], chat_username=data['chat_username'],
-                                     username=data['username'], date=data['date'])
+                                     username=data['username'], date=data['date'], question_type=data['question_type'])
         db.add(new_message)
         db.commit()
 

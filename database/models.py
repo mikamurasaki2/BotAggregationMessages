@@ -15,7 +15,7 @@ class Message(Base):
     chat_username = Column(String)
     username = Column(String)
     date = Column(Integer)
-    #question_type = Column(Text)
+    question_type = Column(Text)
 
 
 class Reply(Base):

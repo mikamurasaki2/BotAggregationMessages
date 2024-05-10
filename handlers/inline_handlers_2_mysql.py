@@ -91,7 +91,8 @@ async def command_group_registration_start(message: Message):
         'user_id': message.from_user.id,
         'username': message.from_user.username,
         'user_first_name': message.from_user.first_name,
-        'user_last_name': message.from_user.last_name
+        'user_last_name': message.from_user.last_name,
+        'is_admin': 0
     }
     # Попытка проверить, что пользователь не существует
     if check_user(user_id=message.from_user.id, chat_id=message.chat.id):
@@ -119,6 +120,7 @@ async def command_feature(message: Message):
 #     file_info = await message.bot.get_file(message.photo[-1].file_id)
 #     await message.photo[-1].download(file_info.file_path.split('photos/')[1])
 
+
 # Запись в бд отправленного вопроса пользователя
 @router.message(ChatTypeFilter(chat_type=["group"]), Question.question)
 async def process_asking_question(message: Message, state: FSMContext):
@@ -132,6 +134,7 @@ async def process_asking_question(message: Message, state: FSMContext):
                    'chat_username': message.chat.title,
                    'username': message.from_user.username,
                    'date': int(message.date.timestamp()),
+                   'question_type': str(data["question_type"])
                    }
 
     if data["question"] is None:
@@ -203,9 +206,37 @@ async def get_registration(callback: CallbackQuery, state: FSMContext):
         await callback.message.edit_text('Введите свое имя:')
 
 
-# Обработчик на колбэк инлайн кнопки отправки вопроса
-@router.callback_query(F.data == 'callback_question')
-async def get_question(callback: CallbackQuery, state: FSMContext):
+# Обработчик на колбэк инлайн кнопки
+@router.callback_query(F.data == 'callback_question_type')
+async def get_question_type_general(callback: CallbackQuery):
+    await callback.message.edit_text('Выберите тип вопроса:',
+                                     reply_markup=inline_buttons.question_type_kb)
+    await callback.answer()
+
+
+@router.callback_query(F.data == 'callback_question_type_general')
+async def get_question_type_general(callback: CallbackQuery, state: FSMContext):
+    await state.update_data(question_type='Общее')
+    await callback.message.edit_text('Введите вопрос:',
+                                     reply_markup=inline_buttons.delete_kb)
+    await state.update_data(message=callback.message.message_id)
+    await state.set_state(Question.question)
+    await callback.answer()
+
+
+@router.callback_query(F.data == 'callback_question_type_theory')
+async def get_question_type_theory(callback: CallbackQuery, state: FSMContext):
+    await state.update_data(question_type='Теоретические вопросы')
+    await callback.message.edit_text('Введите вопрос:',
+                                     reply_markup=inline_buttons.delete_kb)
+    await state.update_data(message=callback.message.message_id)
+    await state.set_state(Question.question)
+    await callback.answer()
+
+
+@router.callback_query(F.data == 'callback_question_type_homework')
+async def get_question_type_homework(callback: CallbackQuery, state: FSMContext):
+    await state.update_data(question_type='Домашнее задание')
     await callback.message.edit_text('Введите вопрос:',
                                      reply_markup=inline_buttons.delete_kb)
     await state.update_data(message=callback.message.message_id)
