@@ -28,6 +28,10 @@ def do_hash(password):
     return sha256(password.encode('utf-8')).hexdigest()
 
 
+def get_time(time):
+    return int(time.utcnow().timestamp() + 3 * 60 * 60)
+
+
 # Регистрация в ЛС бота для авторизации в веб-приложении
 @router.message(ChatTypeFilter(chat_type=["private"]), CommandStart())
 async def command_private_registration_start(message: Message):
@@ -64,7 +68,7 @@ async def process_password(message: Message, state: FSMContext):
         'username': message.from_user.username,
         'user_first_name': data["first_name"],
         'user_last_name': data["last_name"],
-        'date': int(message.date.timestamp()),
+        'date': get_time(message.date),
         'is_admin': 0
     }
     await message.delete()
@@ -134,7 +138,7 @@ async def process_asking_question(message: Message, state: FSMContext):
                    'message_text': message.text,
                    'chat_username': message.chat.title,
                    'username': message.from_user.username,
-                   'date': int(message.date.timestamp()),
+                   'date': get_time(message.date),
                    'question_type': str(data["question_type"]),
                    'is_admin_answer': 0
                    }
@@ -169,12 +173,11 @@ async def save_reply_from_process_message(message: Message):
                                'message_text': message.text,
                                'chat_username': message.chat.title,
                                'username': message.from_user.username,
-                               'date': int(message.date.timestamp()),
+                               'date': get_time(message.date),
                                'replied_to_user_id': message.reply_to_message.from_user.id if message.reply_to_message else None,
                                'replied_to_message_text': message.reply_to_message.text if message.reply_to_message else None,
                                'replied_to_message_id': message.reply_to_message.message_id if message.reply_to_message else None,
-                               'replied_to_message_date': int(
-                                   message.reply_to_message.date.timestamp()) if message.reply_to_message else None,
+                               'replied_to_message_date': get_time(message.reply_to_message.date) if message.reply_to_message else None,
                                'post_id': message.reply_to_message.message_id
                                }
                 insert_reply(data_for_db)
