@@ -33,7 +33,7 @@ def insert_user(data):
     with get_db() as db:
         new_user = models.User(chat_id=data['chat_id'], chat_username=data['chat_username'], user_id=data['user_id'],
                                username=data['username'], user_first_name=data['user_first_name'],
-                               user_last_name=data['user_last_name'])
+                               user_last_name=data['user_last_name'], is_admin=data['is_admin'])
         db.add(new_user)
         db.commit()
 
@@ -42,7 +42,8 @@ def insert_message(data):
     with get_db() as db:
         new_message = models.Message(message_id=data['message_id'], chat_id=data['chat_id'], user_id=data['user_id'],
                                      message_text=data['message_text'], chat_username=data['chat_username'],
-                                     username=data['username'], date=data['date'], question_type=data['question_type'])
+                                     username=data['username'], date=data['date'], question_type=data['question_type'],
+                                     is_admin_answer=data['is_admin_answer'])
         db.add(new_message)
         db.commit()
 

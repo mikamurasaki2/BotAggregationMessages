@@ -1,11 +1,10 @@
-import hashlib
+from hashlib import sha256
 
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
 from aiogram import F, Router
 from aiogram.filters import CommandStart, Command
 from aiogram.types import Message, CallbackQuery
-import bcrypt
 
 from filters.chat_filters import ChatTypeFilter
 from keyboards import inline_buttons
@@ -23,6 +22,10 @@ class About(StatesGroup):
 
 class Question(StatesGroup):
     question = State()
+
+
+def do_hash(password):
+    return sha256(password.encode('utf-8')).hexdigest()
 
 
 # Регистрация в ЛС бота для авторизации в веб-приложении
@@ -55,11 +58,9 @@ async def process_password(message: Message, state: FSMContext):
     await state.update_data(password=message.text)
     await state.set_state(About.confirm)
     data = await state.get_data()
-    hashed_password = bcrypt.hashpw(data["password"].encode('utf-8'), bcrypt.gensalt())
-    hashed_password_sha256 = hashlib.sha256(data["password"].encode()).hexdigest()
     data_for_db = {
         'user_id': message.from_user.id,
-        'password': data["password"],  # hashed_password_sha256,
+        'password': do_hash(data["password"]),  # hashed_password_sha256,
         'username': message.from_user.username,
         'user_first_name': data["first_name"],
         'user_last_name': data["last_name"],
@@ -127,6 +128,9 @@ async def process_asking_question(message: Message, state: FSMContext):
     await state.update_data(question=message.text)
     data = await state.get_data()  # ХРАНИТСЯ АЙДИ СООБЩЕНИЯ И ТЕКСТ СООБЩЕНИЯ
     print(data)
+
+
+
     data_for_db = {'message_id': message.message_id,
                    'chat_id': message.chat.id,
                    'user_id': message.from_user.id,
@@ -134,7 +138,8 @@ async def process_asking_question(message: Message, state: FSMContext):
                    'chat_username': message.chat.title,
                    'username': message.from_user.username,
                    'date': int(message.date.timestamp()),
-                   'question_type': str(data["question_type"])
+                   'question_type': str(data["question_type"]),
+                   'is_admin_answer': 0
                    }
 
     if data["question"] is None:

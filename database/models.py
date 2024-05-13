@@ -16,6 +16,7 @@ class Message(Base):
     username = Column(String)
     date = Column(Integer)
     question_type = Column(Text)
+    is_admin_answer = Column(Integer)
 
 
 class Reply(Base):
@@ -46,7 +47,7 @@ class User(Base):
     username = Column(String)
     user_first_name = Column(String)
     user_last_name = Column(String)
-
+    is_admin = Column(Boolean)
 
 
 class PrivateUser(Base):
