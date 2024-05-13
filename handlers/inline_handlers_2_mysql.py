@@ -128,9 +128,6 @@ async def process_asking_question(message: Message, state: FSMContext):
     await state.update_data(question=message.text)
     data = await state.get_data()  # ХРАНИТСЯ АЙДИ СООБЩЕНИЯ И ТЕКСТ СООБЩЕНИЯ
     print(data)
-
-
-
     data_for_db = {'message_id': message.message_id,
                    'chat_id': message.chat.id,
                    'user_id': message.from_user.id,
@@ -141,7 +138,6 @@ async def process_asking_question(message: Message, state: FSMContext):
                    'question_type': str(data["question_type"]),
                    'is_admin_answer': 0
                    }
-
     if data["question"] is None:
         await message.answer(f'Бот на данный момент принимает вопросы только в текстовом виде.',
                              reply_markup=inline_buttons.thank_kb)
@@ -165,6 +161,8 @@ async def save_reply_from_process_message(message: Message):
                                  reply_markup=inline_buttons.thank_kb)
         else:
             if check_message(message.reply_to_message.message_id):
+                if check_reply_is_admin(message.from_user.id):
+                    edit_message_have_admin_answer(message.reply_to_message.message_id, message.chat.id)
                 data_for_db = {'message_id': message.message_id,
                                'chat_id': message.chat.id,
                                'user_id': message.from_user.id,

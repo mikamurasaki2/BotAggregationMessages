@@ -108,6 +108,15 @@ def check_message(message_id):
             return False
 
 
+def check_reply_is_admin(user_id):
+    with get_db() as db:
+        user = user = db.query(models.PrivateUser).filter(models.PrivateUser.user_id == user_id).first()
+        if user and user.is_admin:
+            return 1
+        else:
+            return 0
+
+
 # GETS
 
 def get_first_name(user_id):
@@ -143,6 +152,17 @@ def delete_user(user_id):
         user = db.query(models.PrivateUser).filter(models.PrivateUser.user_id == user_id).first()
         if user:
             db.delete(user)
+            db.commit()
+            return True
+        else:
+            return False
+
+
+def edit_message_have_admin_answer(message_id, chat_id):
+    with get_db() as db:
+        message = db.query(models.Message).filter(models.Message.message_id == message_id, models.Message.chat_id == chat_id).first()
+        if message:
+            message.is_admin_answer = 1
             db.commit()
             return True
         else:
