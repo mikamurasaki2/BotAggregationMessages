@@ -19,6 +19,8 @@ def get_db():
 
 
 # INSERTS
+
+# Добавление пользователя в users_private
 def insert_private_user(data):
     with get_db() as db:
         new_user = models.PrivateUser(user_id=data['user_id'], password=data['password'], username=data['username'],
@@ -28,6 +30,7 @@ def insert_private_user(data):
         db.commit()
 
 
+# Добавление участника группового чата
 def insert_user(data):
     with get_db() as db:
         new_user = models.User(chat_id=data['chat_id'], chat_username=data['chat_username'], user_id=data['user_id'],
@@ -37,6 +40,7 @@ def insert_user(data):
         db.commit()
 
 
+# Добавление сообщения в бд
 def insert_message(data):
     with get_db() as db:
         new_message = models.Message(message_id=data['message_id'], chat_id=data['chat_id'], user_id=data['user_id'],
@@ -47,6 +51,7 @@ def insert_message(data):
         db.commit()
 
 
+# Добавление ответного сообщения на вопрос в бд
 def insert_reply(data):
     with get_db() as db:
         new_reply = models.Reply(message_id=data['message_id'], chat_id=data['chat_id'], user_id=data['user_id'],
@@ -62,6 +67,8 @@ def insert_reply(data):
 
 
 # CHECKS
+
+# Проверка на уникальность добавляемого пользователя при регистрации
 def check_private_user(user_id):
     with get_db() as db:
         user = db.query(models.PrivateUser).filter(models.PrivateUser.user_id == user_id).first()
@@ -71,6 +78,7 @@ def check_private_user(user_id):
             return False
 
 
+# Проверка на то, что пользователь уже является участником чата
 def check_user(user_id, chat_id):
     with get_db() as db:
         users = db.query(models.User).filter(models.User.user_id == user_id).all()
@@ -84,7 +92,7 @@ def check_user(user_id, chat_id):
             return True
 
 
-
+# Проверка отправляемого вопроса
 def check_message(message_id):
     with get_db() as db:
         msg = db.query(models.Message).filter(models.Message.message_id == message_id).first()
@@ -94,6 +102,7 @@ def check_message(message_id):
             return False
 
 
+# Проверка, что ответное сообщение на вопрос было от админа
 def check_reply_is_admin(user_id):
     with get_db() as db:
         user = user = db.query(models.PrivateUser).filter(models.PrivateUser.user_id == user_id).first()
@@ -105,6 +114,7 @@ def check_reply_is_admin(user_id):
 
 # GETS
 
+# Получение имени пользователя
 def get_first_name(user_id):
     with get_db() as db:
         user = db.query(models.PrivateUser).filter(models.PrivateUser.user_id == user_id).first()
@@ -114,6 +124,7 @@ def get_first_name(user_id):
             return None
 
 
+# Получение фамилии пользователя
 def get_last_name(user_id):
     with get_db() as db:
         user = db.query(models.PrivateUser).filter(models.PrivateUser.user_id == user_id).first()
@@ -123,6 +134,7 @@ def get_last_name(user_id):
             return None
 
 
+# Получения уникального индентификатора пользователя
 def get_user_id(user_id):
     with get_db() as db:
         user = db.query(models.PrivateUser).filter(models.PrivateUser.user_id == user_id).first()
@@ -132,7 +144,9 @@ def get_user_id(user_id):
             return None
 
 
-# Удалить пользователя
+# DELETE
+
+# Удаление пользователя
 def delete_user(user_id):
     with get_db() as db:
         user = db.query(models.PrivateUser).filter(models.PrivateUser.user_id == user_id).first()
@@ -144,6 +158,7 @@ def delete_user(user_id):
             return False
 
 
+# Изменение статуса вопроса на "Админ дал ответ", если админ дал ответ
 def edit_message_have_admin_answer(message_id, chat_id):
     with get_db() as db:
         message = db.query(models.Message).filter(models.Message.message_id == message_id, models.Message.chat_id == chat_id).first()
