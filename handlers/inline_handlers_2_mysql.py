@@ -25,24 +25,34 @@ class Question(StatesGroup):
 
 
 def do_hash(password):
+    """
+    Функция хэширования пароля
+    """
     return sha256(password.encode('utf-8')).hexdigest()
 
 
 def get_time(time):
+    """
+    Функция преобразования времени по Мск
+    """
     return int(time.utcnow().timestamp() + 3 * 60 * 60)
 
 
-# Регистрация в ЛС бота для авторизации в веб-приложении
 @router.message(ChatTypeFilter(chat_type=["private"]), CommandStart())
 async def command_private_registration_start(message: Message):
+    """
+    Функция команды private для личного чата с ботом
+    """
     await message.answer('Регистрация (ФИО), узнать свои данные и забыл пароль /start',
                          reply_markup=inline_buttons.private_kb)
     await message.delete()
 
 
-# Получение имени
 @router.message(About.first_name)
 async def process_first_name(message: Message, state: FSMContext):
+    """
+    Функция для получения ввода имени пользователя
+    """
     await state.update_data(first_name=message.text)
     await state.set_state(About.last_name)
     await message.answer("Введите свою фамилию:")
@@ -51,6 +61,9 @@ async def process_first_name(message: Message, state: FSMContext):
 # Получение фамилии
 @router.message(About.last_name)
 async def process_last_name(message: Message, state: FSMContext):
+    """
+    Функция для получения ввода фамилии пользователя
+    """
     await state.update_data(last_name=message.text)
     await state.set_state(About.password)
     await message.answer("Введите пароль:")
@@ -59,12 +72,15 @@ async def process_last_name(message: Message, state: FSMContext):
 # Получение фамилии и запись данных в бд
 @router.message(About.password)
 async def process_password(message: Message, state: FSMContext):
+    """
+    Функция получения ввода пароля пользователя и запись полученных данных в бд
+    """
     await state.update_data(password=message.text)
     await state.set_state(About.confirm)
     data = await state.get_data()
     data_for_db = {
         'user_id': message.from_user.id,
-        'password': do_hash(data["password"]),  # hashed_password_sha256,
+        'password': do_hash(data["password"]),
         'username': message.from_user.username,
         'user_first_name': data["first_name"],
         'user_last_name': data["last_name"],
@@ -73,7 +89,7 @@ async def process_password(message: Message, state: FSMContext):
     }
     await message.delete()
     print(data)
-    # Попытка проверить, что пользователь существует
+    # Проверка, что данный пользователь не существует
     if not check_private_user(message.from_user.id):
         insert_private_user(data_for_db)
         await message.answer(f'Спасибо, вы внесены в базу данных!'
@@ -86,10 +102,12 @@ async def process_password(message: Message, state: FSMContext):
         await state.clear()
 
 
-# Запись участников группового чата в бд по команде start
 @router.message(ChatTypeFilter(chat_type=["group"]), CommandStart())
 async def command_group_registration_start(message: Message):
-    # Добавляем пользователей в БД при нажатии /start
+    """
+    Становление участником группового чата для использования веб-приложения.
+    Автоматическое добавление пользователя по команде start.
+    """
     data_for_db = {
         'chat_id': message.chat.id,
         'chat_username': message.chat.title,
@@ -99,7 +117,7 @@ async def command_group_registration_start(message: Message):
         'user_last_name': message.from_user.last_name,
         'is_admin': 0
     }
-    # Попытка проверить, что пользователь не существует
+    # Проверка, что пользователь не существует
     if check_user(user_id=message.from_user.id, chat_id=message.chat.id):
         insert_user(data_for_db)
         await message.answer(f'Спасибо, вы стали участником чата в веб-приложении, {message.from_user.username}!',
@@ -109,28 +127,26 @@ async def command_group_registration_start(message: Message):
         await message.delete()
 
 
-# Вызов сообщения с функционалом бота: задать вопрос и перейти на сайт
 @router.message(ChatTypeFilter(chat_type=["group"]), Command('feature'))
 async def command_feature(message: Message):
+    """
+    Вызов сообщения по команде feаture для групповых чатов с выбором
+    основных функций бота: задать вопрос и переход в веб-приложение по url-ссылке.
+    """
     await message.answer('Это основное сообщение тестирования команды /feature для вызова функций бота.',
                          reply_markup=inline_buttons.main_kb)
     await message.delete()
 
 
-# Прототип хранения фото
-# @router.message(ChatTypeFilter(chat_type=["group"]))
-# async def get_photo(message: Message):
-#     file_id = message.photo[-1].file_id # нужно где-то сохранить
-#     await message.bot.send_photo(message.chat.id, file_id)
-#     file_info = await message.bot.get_file(message.photo[-1].file_id)
-#     await message.photo[-1].download(file_info.file_path.split('photos/')[1])
-
-
 # Запись в бд отправленного вопроса пользователя
 @router.message(ChatTypeFilter(chat_type=["group"]), Question.question)
 async def process_asking_question(message: Message, state: FSMContext):
+    """
+    Запись полученного вопроса в базу данных
+    """
     await state.update_data(question=message.text)
-    data = await state.get_data()  # ХРАНИТСЯ АЙДИ СООБЩЕНИЯ И ТЕКСТ СООБЩЕНИЯ
+    # Хранение полученных от ввода данных
+    data = await state.get_data()
     print(data)
     data_for_db = {'message_id': message.message_id,
                    'chat_id': message.chat.id,
@@ -142,6 +158,7 @@ async def process_asking_question(message: Message, state: FSMContext):
                    'question_type': str(data["question_type"]),
                    'is_admin_answer': 0
                    }
+    # Проверка, что введенный вопрос - текстовое сообщение
     if data["question"] is None:
         await message.answer(f'Бот на данный момент принимает вопросы только в текстовом виде.',
                              reply_markup=inline_buttons.thank_kb)
@@ -152,18 +169,22 @@ async def process_asking_question(message: Message, state: FSMContext):
                              f'\nВопрос задан: {message.from_user.id}'
                              f'\nВаш вопрос: {data["question"]}',
                              reply_markup=inline_buttons.thank_kb)
-        await state.clear()  # чтобы не засорялся, у пользователя слетало состояние
+        # Очистка состояния FSM
+        await state.clear()
 
 
-# Сохраняем только реплаи, которые были даны на вопросы через бота
 @router.message(ChatTypeFilter(chat_type=["group"]))
 async def save_reply_from_process_message(message: Message):
-    # Check if the message is a reply
+    """
+    Функция записи в бд ответного сообщения на вопрос, отправленный при помощи бота
+    """
+    # Проверка, что обрабатываемое сообщение является реплаем
     if message.reply_to_message:
         if message.text is None:
             await message.answer(f'Бот на данный момент принимает ответы только в текстовом виде.',
                                  reply_markup=inline_buttons.thank_kb)
         else:
+            # Проверка, что это ответное сообщение на вопрос из бд
             if check_message(message.reply_to_message.message_id):
                 if check_reply_is_admin(message.from_user.id):
                     edit_message_have_admin_answer(message.reply_to_message.message_id, message.chat.id)
@@ -177,15 +198,17 @@ async def save_reply_from_process_message(message: Message):
                                'replied_to_user_id': message.reply_to_message.from_user.id if message.reply_to_message else None,
                                'replied_to_message_text': message.reply_to_message.text if message.reply_to_message else None,
                                'replied_to_message_id': message.reply_to_message.message_id if message.reply_to_message else None,
-                               'replied_to_message_date': get_time(message.reply_to_message.date) if message.reply_to_message else None,
+                               'replied_to_message_date': get_time(
+                                   message.reply_to_message.date) if message.reply_to_message else None,
                                'post_id': message.reply_to_message.message_id
                                }
                 insert_reply(data_for_db)
 
 
-# Сделать get в db и доделать
+# CALLBACKS
+
 @router.callback_query(F.data == 'callback_my_data')
-async def get_data(callback: CallbackQuery, state: FSMContext):
+async def get_data(callback: CallbackQuery):
     if check_private_user(callback.from_user.id):
         await callback.message.edit_text(f'Тут должны быть ваши данные\n'
                                          f'\nФИО: {get_last_name(callback.from_user.id)} {get_first_name(callback.from_user.id)}'
@@ -199,10 +222,10 @@ async def get_data(callback: CallbackQuery, state: FSMContext):
         await callback.answer()
 
 
-# Обработчик на колбэк на регистрацию
+# Обработчик коллбэка на регистрацию
 @router.callback_query(F.data == 'callback_registration')
 async def get_registration(callback: CallbackQuery, state: FSMContext):
-    # Попытка проверить, что пользователь не существует
+    # Проверка, что пользователь не существует
     if check_private_user(callback.from_user.id):
         await callback.message.edit_text(f'Вы уже внесены в базу данных.',
                                          reply_markup=inline_buttons.my_data_kb)
@@ -212,9 +235,11 @@ async def get_registration(callback: CallbackQuery, state: FSMContext):
         await callback.message.edit_text('Введите свое имя:')
 
 
-# Обработчик на колбэк инлайн кнопки
 @router.callback_query(F.data == 'callback_question_type')
 async def get_question_type_general(callback: CallbackQuery):
+    """
+    Функция обработки коллбэка на инлайн кнопку для выбора категории вопроса
+    """
     await callback.message.edit_text('Выберите тип вопроса:',
                                      reply_markup=inline_buttons.question_type_kb)
     await callback.answer()
@@ -222,6 +247,10 @@ async def get_question_type_general(callback: CallbackQuery):
 
 @router.callback_query(F.data == 'callback_question_type_general')
 async def get_question_type_general(callback: CallbackQuery, state: FSMContext):
+    """
+    Функция обработки коллбэка на категорию вопроса "Общее"
+    И начало FSM для получения введенного вопроса
+    """
     await state.update_data(question_type='Общее')
     await callback.message.edit_text('Введите вопрос:',
                                      reply_markup=inline_buttons.delete_kb)
@@ -232,6 +261,10 @@ async def get_question_type_general(callback: CallbackQuery, state: FSMContext):
 
 @router.callback_query(F.data == 'callback_question_type_theory')
 async def get_question_type_theory(callback: CallbackQuery, state: FSMContext):
+    """
+    Функция обработки коллбэка на категорию вопроса "Теоретические вопросы"
+    И начало FSM для получения введенного вопроса
+    """
     await state.update_data(question_type='Теоретические вопросы')
     await callback.message.edit_text('Введите вопрос:',
                                      reply_markup=inline_buttons.delete_kb)
@@ -242,6 +275,10 @@ async def get_question_type_theory(callback: CallbackQuery, state: FSMContext):
 
 @router.callback_query(F.data == 'callback_question_type_homework')
 async def get_question_type_homework(callback: CallbackQuery, state: FSMContext):
+    """
+    Функция обработки коллбэка на категорию вопроса "Домашнее задание".
+    И начало FSM для получения введенного вопроса
+    """
     await state.update_data(question_type='Домашнее задание')
     await callback.message.edit_text('Введите вопрос:',
                                      reply_markup=inline_buttons.delete_kb)
@@ -250,9 +287,11 @@ async def get_question_type_homework(callback: CallbackQuery, state: FSMContext)
     await callback.answer()
 
 
-# Удаление сообщения после нажатия для fsm
 @router.callback_query(F.data == 'callback_delete')
 async def get_delete_message(callback: CallbackQuery, state: FSMContext):
+    """
+    Функция обработчика коллбэка для прерывания состояния FSM ввода вопроса
+    """
     current_state = await state.get_state()
     if current_state is None:
         return
@@ -260,16 +299,20 @@ async def get_delete_message(callback: CallbackQuery, state: FSMContext):
     await state.clear()
 
 
-# Удаление сообщения после нажатия обычных сообщений
 @router.callback_query(F.data == 'callback_thank')
 async def get_thank_message(callback: CallbackQuery, state: FSMContext):
+    """
+    Функция обработки коллбэка для удаления обычных сообщений бота по кнопке
+    """
     await callback.message.delete()
     await state.clear()
 
 
-# Удаление профиля пользователя, когда он забыл пароль для восстановления
 @router.callback_query(F.data == 'callback_password')
-async def get_thank_message(callback: CallbackQuery, state: FSMContext):
+async def get_thank_message(callback: CallbackQuery):
+    """
+    Функция обработки коллбэка инлайн-кнопки для удаления профиля пользователя в бд
+    """
     if delete_user(callback.from_user.id):
         await callback.message.edit_text('Ваша учетная запись была удалена из базы данных.'
                                          '\nМожете повторить вход в веб-приложение по логину и с новым паролем, '
