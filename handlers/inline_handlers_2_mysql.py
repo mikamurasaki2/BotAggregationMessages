@@ -6,6 +6,8 @@ from aiogram import F, Router
 from aiogram.filters import CommandStart, Command
 from aiogram.types import Message, CallbackQuery
 
+import asyncio
+
 from filters.chat_filters import ChatTypeFilter
 from keyboards import inline_buttons
 from database.database_mysql import *
@@ -36,6 +38,24 @@ def get_time(time):
     Функция преобразования времени по Мск
     """
     return int(time.utcnow().timestamp() + 3 * 60 * 60)
+
+
+async def reset_fsm_state(user_id, state, timeout=30):
+    """
+    Функция сброса состояния после истечения времени в секундах
+    """
+    last_message_time = state.get('last_message_time')
+    if last_message_time is None:
+        # First message, save the time
+        state['last_message_time'] = asyncio.get_running_loop().time()
+        return
+
+    current_time = asyncio.get_running_loop().time()
+    time_since_last_message = current_time - last_message_time
+    if time_since_last_message > timeout:
+        # User has not written a new message within 5 minutes, reset the state
+        state.reset_state()
+        state['last_message_time'] = current_time
 
 
 @router.message(ChatTypeFilter(chat_type=["private"]), CommandStart())
@@ -186,6 +206,19 @@ async def save_reply_from_process_message(message: Message):
         else:
             # Проверка, что это ответное сообщение на вопрос из бд
             if check_message(message.reply_to_message.message_id):
+                # Проверка регистрации пользователя
+                if not check_private_user(message.from_user.id):
+                    data_anon = {
+                        'user_id': message.from_user.id,
+                        'password': None,
+                        'username': message.from_user.username,
+                        'user_first_name': message.from_user.first_name,
+                        'user_last_name': message.from_user.last_name,
+                        'date': get_time(message.date),
+                        'is_admin': 0
+                    }
+                    insert_anon_private_user(data_anon)
+                # Проверка, что это ответное сообщение от админа
                 if check_reply_is_admin(message.from_user.id):
                     edit_message_have_admin_answer(message.reply_to_message.message_id, message.chat.id)
                 data_for_db = {'message_id': message.message_id,
@@ -256,6 +289,7 @@ async def get_question_type_general(callback: CallbackQuery, state: FSMContext):
                                      reply_markup=inline_buttons.delete_kb)
     await state.update_data(message=callback.message.message_id)
     await state.set_state(Question.question)
+    await reset_fsm_state(callback.from_user.id, Question.question)
     await callback.answer()
 
 

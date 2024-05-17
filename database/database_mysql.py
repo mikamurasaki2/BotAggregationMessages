@@ -7,6 +7,7 @@ import database.models as models
 
 # import models
 
+#engine = create_engine('mysql+mysqlconnector://root:@localhost/md1')
 engine = create_engine('mysql+mysqlconnector://root:root@localhost/maindb')
 Session = sessionmaker(bind=engine)
 
@@ -63,6 +64,16 @@ def insert_reply(data):
                                  replied_to_message_date=data['replied_to_message_date'],
                                  post_id=data['replied_to_message_id'])
         db.add(new_reply)
+        db.commit()
+
+
+# Добавление анонима в таблице зарегистрированных пользователей
+def insert_anon_private_user(data):
+    with get_db() as db:
+        new_user = models.PrivateUser(user_id=data['user_id'], password=data['password'], username=data['username'],
+                                      user_first_name=data['user_first_name'], user_last_name=data['user_last_name'],
+                                      date=data['date'], is_admin=data['is_admin'])
+        db.add(new_user)
         db.commit()
 
 
