@@ -1,59 +1,57 @@
-CREATE DATABASE maindb;
+# CREATE DATABASE maindb;
 Use maindb;
+drop table table_messages;
+drop table table_replies;
+drop table table_users_private;
+drop table table_users;
 
 create table table_messages
 (
-    id            INTEGER
-        primary key auto_increment,
-    message_id    BIGINT,
-    chat_id       BIGINT,
-    user_id       BIGINT,
-    message_text  TEXT,
-    chat_username TEXT,
-    username      TEXT,
-    date          INTEGER
+    id              int auto_increment
+        primary key,
+    message_id      bigint null,
+    chat_id         bigint null,
+    user_id         bigint null,
+    message_text    text   null,
+    chat_username   text   null,
+    username        text   null,
+    date            int    null,
+    question_type   text   null,
+    is_admin_answer tinyint(1) null
 );
 
 create table table_replies
 (
-    id                      INTEGER
-        primary key auto_increment,
-    message_id              BIGINT,
-    chat_id                 BIGINT,
-    user_id                 BIGINT,
-    message_text            TEXT,
-    chat_username           TEXT,
-    username                TEXT,
-    date                    INTEGER,
-    replied_to_user_id      BIGINT,
-    replied_to_message_text TEXT,
-    replied_to_message_id   BIGINT,
-    replied_to_message_date TEXT,
-    post_id                 BIGINT references table_messages (id)
+    id                      int auto_increment
+        primary key,
+    message_text            text   null,
+    username                text   null,
+    date                    int    null,
+    post_id                 bigint null,
+    chat_id                 bigint null,
+    user_id                 bigint null,
 );
 
 create table table_users
 (
-    id              INTEGER
-        primary key auto_increment,
-    chat_id         BIGINT,
-    chat_username   TEXT,
-    user_id         BIGINT,
-    username        TEXT,
-    user_first_name TEXT,
-    user_last_name  TEXT,
-    is_admin        BOOLEAN
+    id              int auto_increment
+        primary key,
+    chat_id         bigint     null,
+    user_id         bigint     null,
+    user_first_name text       null,
+    user_last_name  text       null,
+    username        text       null,
 );
 
 create table table_users_private
 (
-    id              INTEGER
-        primary key auto_increment,
-    user_id         BIGINT,
-    password        TEXT,
-    username        TEXT,
-    user_first_name TEXT,
-    user_last_name  TEXT,
-    date            BIGINT,
-    is_admin        BOOLEAN
+    id              int auto_increment
+        primary key,
+    user_id         bigint     null,
+    password        text       null,
+    username        text       null,
+    date            bigint     null,
+    user_first_name text       null,
+    user_last_name  text       null,
+    is_admin        tinyint(1) null
 );
