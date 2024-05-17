@@ -7,7 +7,6 @@ import database.models as models
 
 # import models
 
-#engine = create_engine('mysql+mysqlconnector://root:@localhost/maindb8')
 engine = create_engine('mysql+mysqlconnector://root:root@localhost/maindb')
 Session = sessionmaker(bind=engine)
 
@@ -85,19 +84,6 @@ def check_user(user_id, chat_id):
             return True
 
 
-# def check_user(user_id, chat_id):
-#     with get_db() as db:
-#         user = db.query(models.User).filter(models.User.user_id == user_id).first()
-#         if user:
-#             users = db.query(models.User).filter(models.User.user_id == user_id).all()
-#             chats = [user.chat_id for user in users]
-#             if chat_id not in chats:
-#                 return True
-#             else:
-#                 return False
-#         else:
-#             return True
-
 
 def check_message(message_id):
     with get_db() as db:
@@ -167,25 +153,3 @@ def edit_message_have_admin_answer(message_id, chat_id):
             return True
         else:
             return False
-
-
-# def insert_bot_message(message_id, chat_id, date):
-#     with get_db() as db:
-#         new_message = models.BotMessage(message_id=message_id, chat_id=chat_id, date=date)
-#         db.add(new_message)
-#         db.commit()
-#
-#
-# def delete_message(message_id, chat_id):
-#     with get_db() as db:
-#         messages = db.query(models.BotMessage).filter(models.BotMessage.message_id == message_id).all()
-#         if messages:
-#             for message in messages:
-#                 if message.chat_id == chat_id:
-#                     db.delete(message)
-#                     db.commit()
-#                     return True
-#                 else:
-#                     return False
-#         else:
-#             return False
